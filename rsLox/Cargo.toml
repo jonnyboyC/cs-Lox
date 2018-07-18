@@ -1,0 +1,6 @@
+[package]
+name = "rsLox"
+version = "0.1.0"
+authors = ["John Chabot <chabotja@miamioh.edu>"]
+
+[dependencies]

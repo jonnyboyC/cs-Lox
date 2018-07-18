@@ -1,0 +1,6 @@
+Debug/
+bin/
+obj/
+.vs/
+/target
+**/*.rs.bk
