@@ -2,5 +2,6 @@ Debug/
 bin/
 obj/
 .vs/
+.vscode/
 /target
 **/*.rs.bk
