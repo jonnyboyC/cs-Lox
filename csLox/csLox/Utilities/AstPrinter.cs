@@ -16,12 +16,12 @@ namespace csLox.Utilities
 
         public string VisitBinaryExpr(Expr.Binary expr)
         {
-            return Parenthesize(expr.OpCode.Lexeme, new Expr[] { expr.Left, expr.Right });
+            return Parenthesize(expr.OpCode.Lexeme, expr.Left, expr.Right);
         }
 
         public string VisitGroupingExpr(Expr.Grouping expr)
         {
-            return Parenthesize("Group", expr.Expression.Yield());
+            return Parenthesize("Group", expr.Expression);
         }
 
         public string VisitLiteralExpr(Expr.Literal expr)
@@ -32,10 +32,10 @@ namespace csLox.Utilities
 
         public string VisitUnaryExpr(Expr.Unary expr)
         {
-            return Parenthesize(expr.OpCode.Lexeme, expr.Right.Yield());
+            return Parenthesize(expr.OpCode.Lexeme, expr.Right);
         }
 
-        private string Parenthesize(string name, IEnumerable<Expr> expressions)
+        private string Parenthesize(string name, params Expr[] expressions)
         {
             StringBuilder builder = new StringBuilder();
 
