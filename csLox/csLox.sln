@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2042
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "csLox", "csLox\csLox.csproj", "{71C4A4DF-C5DB-471E-9981-DAAFB59D4CA4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "csLox", "csLox\csLox.csproj", "{71C4A4DF-C5DB-471E-9981-DAAFB59D4CA4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tools", "tools\tools.csproj", "{1E17BB70-892B-4470-A778-8101594FA93C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GenerateAst", "tools\GenerateAst.csproj", "{1E17BB70-892B-4470-A778-8101594FA93C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

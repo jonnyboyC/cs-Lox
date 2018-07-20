@@ -4,47 +4,75 @@ using csLox.Scanning;
 
 namespace csLox.Parsing
 {
-    internal abstract class Expr { }
-
-    internal class Binary : Expr
+    internal abstract class Expr
     {
-        public Expr Left { get; }
-        public Token OpCode { get; }
-        public Expr Right { get; }
-        Binary(Expr left, Token opCode, Expr right)
+        internal abstract T Accept<T>(Visitor<T> visitor);
+
+        internal interface Visitor<T> 
         {
-            Left = left;
-            OpCode = opCode;
-            Right = right;
+            T VisitBinaryExpr(Binary expr);
+            T VisitGroupingExpr(Grouping expr);
+            T VisitLiteralExpr(Literal expr);
+            T VisitUnaryExpr(Unary expr);
         }
-    }
 
-    internal class Grouping : Expr
-    {
-        public Expr Expression { get; }
-        Grouping(Expr expression)
+
+        internal class Binary : Expr
         {
-            Expression = expression;
+            internal Expr Left { get; }
+            internal Token OpCode { get; }
+            internal Expr Right { get; }
+            internal Binary(Expr left, Token opCode, Expr right)
+            {
+                Left = left;
+                OpCode = opCode;
+                Right = right;
+            }
+            internal override T Accept<T>(Visitor<T> visitor)
+            {
+                return visitor.VisitBinaryExpr(this);
+            }
         }
-    }
 
-    internal class Literal : Expr
-    {
-        public Object Value { get; }
-        Literal(Object value)
+        internal class Grouping : Expr
         {
-            Value = value;
+            internal Expr Expression { get; }
+            internal Grouping(Expr expression)
+            {
+                Expression = expression;
+            }
+            internal override T Accept<T>(Visitor<T> visitor)
+            {
+                return visitor.VisitGroupingExpr(this);
+            }
         }
-    }
 
-    internal class Unary : Expr
-    {
-        public Token OpCode { get; }
-        public Expr Right { get; }
-        Unary(Token opCode, Expr right)
+        internal class Literal : Expr
         {
-            OpCode = opCode;
-            Right = right;
+            internal Object Value { get; }
+            internal Literal(Object value)
+            {
+                Value = value;
+            }
+            internal override T Accept<T>(Visitor<T> visitor)
+            {
+                return visitor.VisitLiteralExpr(this);
+            }
+        }
+
+        internal class Unary : Expr
+        {
+            internal Token OpCode { get; }
+            internal Expr Right { get; }
+            internal Unary(Token opCode, Expr right)
+            {
+                OpCode = opCode;
+                Right = right;
+            }
+            internal override T Accept<T>(Visitor<T> visitor)
+            {
+                return visitor.VisitUnaryExpr(this);
+            }
         }
     }
 }
