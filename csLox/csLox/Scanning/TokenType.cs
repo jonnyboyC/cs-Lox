@@ -7,7 +7,7 @@ namespace csLox.Scanning
     internal enum TokenType
     {
         // Single-character tokens
-        Left_Paren, Right_Paren, Left_Brace, Right_Brace,
+        LeftParen, RightParen, LeftBrace, RightBrace,
         Comma, Dot, Minus, Plus, SemiColon, Slash, Star,
 
         // One or two character tokens.

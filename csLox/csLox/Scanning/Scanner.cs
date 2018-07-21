@@ -63,10 +63,10 @@ namespace csLox.Scanning
             char c = Advance();
             switch (c)
             {
-                case '(': return GenerateToken(TokenType.Left_Paren).Some();
-                case ')': return GenerateToken(TokenType.Right_Paren).Some();
-                case '{': return GenerateToken(TokenType.Left_Brace).Some();
-                case '}': return GenerateToken(TokenType.Right_Brace).Some();
+                case '(': return GenerateToken(TokenType.LeftParen).Some();
+                case ')': return GenerateToken(TokenType.RightParen).Some();
+                case '{': return GenerateToken(TokenType.LeftBrace).Some();
+                case '}': return GenerateToken(TokenType.RightBrace).Some();
                 case ',': return GenerateToken(TokenType.Comma).Some();
                 case '.': return GenerateToken(TokenType.Dot).Some();
                 case '-': return GenerateToken(TokenType.Minus).Some();
@@ -139,7 +139,7 @@ namespace csLox.Scanning
             }
 
             Advance();
-            string value = _source.Substring(_start + 1, _current - _start - 1);
+            string value = _source.Substring(_start + 1, _current - _start - 2);
             return GenerateToken(TokenType.String, value);
         }
 

@@ -6,6 +6,6 @@ namespace csLox
 {
     public interface IErrorReporter
     {
-        void Error(int line, string message);
+        void Report(int line, string where, string message);
     }
 }
