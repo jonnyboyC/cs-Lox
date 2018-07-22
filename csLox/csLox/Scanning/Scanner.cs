@@ -73,6 +73,8 @@ namespace csLox.Scanning
                 case '+': return GenerateToken(TokenType.Plus).Some();
                 case ';': return GenerateToken(TokenType.SemiColon).Some();
                 case '*': return GenerateToken(TokenType.Star).Some();
+                case '?': return GenerateToken(TokenType.Question).Some();
+                case ':': return GenerateToken(TokenType.Colon).Some();
 
                 // operators
                 case '!': return GenerateToken(Match('=') ? TokenType.BangEqual : TokenType.Bang).Some();

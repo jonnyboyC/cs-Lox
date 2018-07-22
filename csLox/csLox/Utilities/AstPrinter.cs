@@ -14,6 +14,11 @@ namespace csLox.Utilities
             return expr.Accept(this);
         }
 
+        public string VisitConditionalExpr(Expr.Conditional expr)
+        {
+            return Parenthesize("Conditional", expr.Condition, expr.TrueExpr, expr.FalseExpr);
+        }
+
         public string VisitBinaryExpr(Expr.Binary expr)
         {
             return Parenthesize(expr.OpCode.Lexeme, expr.Left, expr.Right);

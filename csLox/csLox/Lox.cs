@@ -6,13 +6,16 @@ using Optional;
 using csLox.Scanning;
 using csLox.Parsing;
 using csLox.Utilities;
+using csLox.Interpreting;
 
 namespace csLox
 {
     public class Lox
     {
-        public static bool HadError = false;
+        private static bool HadError = false;
+        private static bool HadRuntimeError = false;
         private static IErrorReporter Reporter = new ConsoleReporter();
+        private static Interpreter Interpreter = new Interpreter();
 
         public static int Main(string[] args)
         {
@@ -35,17 +38,25 @@ namespace csLox
         {
             if (token.Type == TokenType.Eof)
             {
-                Reporter.Report(token.Line, " at end", message);
+                Reporter.ReportError(token.Line, " at end", message);
             }
             else
             {
-                Reporter.Report(token.Line, $" at '{token.Lexeme}'", message);
+                Reporter.ReportError(token.Line, $" at '{token.Lexeme}'", message);
             }
+            HadError = true;
+        }
+
+        internal static void RuntimeError(RuntimeError error) 
+        {
+            Reporter.ReportRuntimeError(error);
+            HadRuntimeError = true;
         }
 
         internal static void Error(int line, string message)
         {
-            Reporter.Report(line, "",  message);
+            Reporter.ReportError(line, "",  message);
+            HadError = true;
         }
 
         private static int RunFile(string path)
@@ -73,14 +84,15 @@ namespace csLox
             IEnumerable<Token> tokens = scanner.ScanTokens();
 
             Parser parser = new Parser(tokens);
-            Option<Expr> expression = parser.Parse();
+            Option<Expr> exprOption = parser.Parse();
 
-            if (HadError) return 1;
+            if (HadError) return 65;
 
-            expression.Match(
-                expr => Console.WriteLine(new AstPrinter().Print(expr)),
-                () => Console.WriteLine("Parser bug")
+            exprOption.Match(
+                (expression) => Interpreter.Interpret(expression),
+                () => throw new Exception("Parser bug")
             );
+            if (HadRuntimeError) return 70;
 
             return 0;
         }

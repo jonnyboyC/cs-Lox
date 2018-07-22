@@ -31,7 +31,22 @@ namespace csLox.Parsing
 
         private Expr Expression() 
         {
-            return Equality();
+            return Conditional();
+        }
+
+        private Expr Conditional()
+        {
+            Expr expr = Equality();
+
+            if (Match(TokenType.Question))
+            {
+                Expr trueExpr = Conditional();
+                Consume(TokenType.Colon, "Expect ':' after expression");
+                Expr falseExpr = Conditional();
+                return new Expr.Conditional(expr, trueExpr, falseExpr);
+            }
+
+            return expr;
         }
 
         private Expr Equality() 
@@ -183,6 +198,8 @@ namespace csLox.Parsing
                     case TokenType.Print:
                     case TokenType.Return:
                         return;
+                    default:
+                        break;
                 }
 
                 Advance();

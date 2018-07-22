@@ -19,9 +19,10 @@ namespace tools
 
             DefineAst(outputDir, "Expr", "csLox.Parsing", new List<string>() 
             {
-                "Binary     : Expr left, Token opCode, Expr right",
                 "Grouping   : Expr expression",
                 "Literal    : Object value",
+                "Conditional: Expr condition, Expr trueExpr, Expr falseExpr",
+                "Binary     : Expr left, Token opCode, Expr right",
                 "Unary      : Token opCode, Expr right",
             });
             return 0;

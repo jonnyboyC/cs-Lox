@@ -6,10 +6,14 @@ namespace csLox
 {
     internal class ConsoleReporter: IErrorReporter
     {
-        public void Report(int line, string where, string message)
+        public void ReportError(int line, string where, string message)
         {
             Console.WriteLine($"[line {line}] Error {where}: {message}");
-            Lox.HadError = true;
+        }
+
+        public void ReportRuntimeError(RuntimeError error)
+        {
+            Console.WriteLine($"{error.Message}\n[line {error.Token.Line}]");
         }
     }
 }

@@ -4,8 +4,9 @@ using System.Text;
 
 namespace csLox
 {
-    public interface IErrorReporter
+    internal interface IErrorReporter
     {
-        void Report(int line, string where, string message);
+        void ReportError(int line, string where, string message);
+        void ReportRuntimeError(RuntimeError error);
     }
 }
