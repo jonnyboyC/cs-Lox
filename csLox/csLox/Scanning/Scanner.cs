@@ -80,7 +80,7 @@ namespace csLox.Scanning
                 case '!': return GenerateToken(Match('=') ? TokenType.BangEqual : TokenType.Bang).Some();
                 case '=': return GenerateToken(Match('=') ? TokenType.EqualEqual : TokenType.Equal).Some();
                 case '<': return GenerateToken(Match('=') ? TokenType.LessEqual : TokenType.Less).Some();
-                case '>': return GenerateToken(Match('=') ? TokenType.GreaterEqual : TokenType.Equal).Some();
+                case '>': return GenerateToken(Match('=') ? TokenType.GreaterEqual : TokenType.Greater).Some();
                 case '/':
                     if (Match('/'))
                     {

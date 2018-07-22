@@ -75,23 +75,20 @@ namespace csLox
                 Console.Write("> ");
                 Run(Console.ReadLine());
                 HadError = false;
+                HadRuntimeError = false;
             }
         }
 
         private static int Run(string source)
         {
             Scanner scanner = new Scanner(source);
-            IEnumerable<Token> tokens = scanner.ScanTokens();
+            Token[] tokens = scanner.ScanTokens().ToArray();
 
             Parser parser = new Parser(tokens);
-            Option<Expr> exprOption = parser.Parse();
+            Stmt[] statements = parser.Parse().ToArray();
 
             if (HadError) return 65;
-
-            exprOption.Match(
-                (expression) => Interpreter.Interpret(expression),
-                () => throw new Exception("Parser bug")
-            );
+            Interpreter.Interpret(statements);
             if (HadRuntimeError) return 70;
 
             return 0;

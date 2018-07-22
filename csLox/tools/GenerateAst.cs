@@ -18,13 +18,31 @@ namespace tools
             string outputDir = args[0];
 
             DefineAst(outputDir, "Expr", "csLox.Parsing", new List<string>() 
-            {
-                "Grouping   : Expr expression",
-                "Literal    : Object value",
-                "Conditional: Expr condition, Expr trueExpr, Expr falseExpr",
-                "Binary     : Expr left, Token opCode, Expr right",
-                "Unary      : Token opCode, Expr right",
-            });
+                {
+                    "Assign     : Token name, Expr value",
+                    "Grouping   : Expr expression",
+                    "Logical    : Expr left, Token opCode, Expr right",
+                    "Literal    : Object value",
+                    "Conditional: Expr condition, Expr trueExpr, Expr falseExpr",
+                    "Binary     : Expr left, Token opCode, Expr right",
+                    "Unary      : Token opCode, Expr right",
+                    "Variable   : Token name"
+                },
+                "csLox.Scanning"
+            );
+
+            DefineAst(outputDir, "Stmt", "csLox.Parsing", new List<string>()
+                {
+                    "Block          : List<Stmt> statements",
+                    "ExpressionStmt : Expr expression",
+                    "If             : Expr condition, Stmt thenBranch, Option<Stmt> elseBranch",
+                    "Print          : Expr expression",
+                    "Var            : Token name, Option<Expr> initializer",
+                    "While          : Expr condition, Stmt body"
+                },
+                "csLox.Scanning",
+                "Optional"
+            );
             return 0;
         }
 
@@ -48,7 +66,8 @@ namespace tools
             string outputDirectory, 
             string baseName, 
             string nameSpaceName, 
-            List<string> typeDefinitions) 
+            List<string> typeDefinitions,
+            params string[] additionalDependencies) 
         {
             string path = $"{outputDirectory}/{baseName}.cs";
             List<AstType> types = typeDefinitions.Select(t => new AstType(t)).ToList();
@@ -57,7 +76,12 @@ namespace tools
             {
                 sw.WriteLine("using System;");
                 sw.WriteLine("using System.Collections.Generic;");
-                sw.WriteLine("using csLox.Scanning;");
+
+                foreach (string dependency in additionalDependencies)
+                {
+                    sw.WriteLine($"using {dependency};");
+                }
+
                 sw.WriteLine("");
                 sw.WriteLine($"namespace {nameSpaceName}");
                 sw.WriteLine("{");

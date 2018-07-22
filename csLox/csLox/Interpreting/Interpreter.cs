@@ -1,24 +1,119 @@
 using System;
+using System.Collections.Generic;
+using Optional;
 using csLox;
 using csLox.Parsing;
 using csLox.Scanning;
+using Environment = csLox.Scoping.Environment;
 
 namespace csLox.Interpreting
 {
-    internal class Interpreter : Expr.Visitor<object>
+    internal class Interpreter : Expr.Visitor<object>, Stmt.Visitor<Dummy>
     {
+        private Environment _environment = new Environment();
 
-        internal void Interpret(Expr expression)
+        internal void Interpret(IEnumerable<Stmt> statments)
         {
             try
             {
-                object value = Evalutate(expression);
-                Console.WriteLine(Stringify(value));
+                foreach (Stmt statement in statments) 
+                {
+                    Execute(statement);
+                }
             }
             catch (RuntimeError error)
             {
                 Lox.RuntimeError(error);
             }
+        }
+
+        private void Execute(Stmt stmt)
+        {
+            stmt.Accept(this);
+        }
+
+        private void ExecuteBlock(List<Stmt> statments, Environment environment)
+        {
+            Environment previous = _environment;
+            try 
+            {
+                _environment = environment;
+
+                foreach (Stmt statement in statments)
+                {
+                    Execute(statement);
+                }
+            }
+            finally
+            {
+                this._environment = previous;
+            }
+        }
+
+        private object Evalutate(Expr expr)
+        {
+            return expr.Accept(this);
+        }
+
+        public Dummy VisitExpressionStmtStmt(Stmt.ExpressionStmt stmt)
+        {
+            Evalutate(stmt.Expression);
+            return null;
+        }
+
+        public Dummy VisitIfStmt(Stmt.If stmt)
+        {
+            if (IsTruthy(Evalutate(stmt.Condition)))
+            {
+                Execute(stmt.ThenBranch);
+            }
+            else
+            {
+                stmt.ElseBranch.MatchSome((elseBranch) => Execute(elseBranch));
+            }
+            
+            return null;
+        }
+
+        public Dummy VisitWhileStmt(Stmt.While stmt)
+        {
+            while (IsTruthy(Evalutate(stmt.Condition)))
+            {
+                Execute(stmt.Body);
+            }
+
+            return null;
+        }
+
+        public Dummy VisitPrintStmt(Stmt.Print stmt)
+        {
+            object value = Evalutate(stmt.Expression);
+            Console.WriteLine(Stringify(value));
+            return null;
+        }
+
+        public Dummy VisitVarStmt(Stmt.Var stmt)
+        {
+            stmt.Initializer.Match(
+                some: init => _environment.Define(stmt.Name.Lexeme, Evalutate(init)),
+                none: () => _environment.Declare(stmt.Name.Lexeme)
+            );
+
+            return null;
+        }
+
+        public Dummy VisitBlockStmt(Stmt.Block stmt)
+        {
+            ExecuteBlock(stmt.Statements, new Environment(_environment));
+            return null;
+        }
+
+        public object VisitAssignExpr(Expr.Assign expr)
+        {
+            object value = Evalutate(expr.Value);
+
+            _environment.Assign(expr.Name, value);
+            return value;
         }
 
         public object VisitBinaryExpr(Expr.Binary expr)
@@ -94,6 +189,22 @@ namespace csLox.Interpreting
             return expr.Value;
         }
 
+        public object VisitLogicalExpr(Expr.Logical expr)
+        {
+            object left = Evalutate(expr.Left);
+
+            if (expr.OpCode.Type == TokenType.Or)
+            {
+                if (IsTruthy(left)) return left;
+            }
+            else
+            {
+                if (!IsTruthy(left)) return left;
+            }
+
+            return Evalutate(expr.Right);
+        }
+
         public object VisitUnaryExpr(Expr.Unary expr)
         {
             object right = Evalutate(expr.Right);
@@ -106,16 +217,8 @@ namespace csLox.Interpreting
                     CheckNumberOperand(expr.OpCode, right);
                     return -(double)right;
                 default:
-                    throw new Exception();
+                    throw new RuntimeError(expr.OpCode, "Unrecongnized unary operator");
             }
-
-
-            throw new NotImplementedException();
-        }
-
-        private object Evalutate(Expr expr)
-        {
-            return expr.Accept(this);
         }
 
         private bool IsTruthy(object obj)
@@ -181,6 +284,11 @@ namespace csLox.Interpreting
             }
 
             return obj.ToString();
+        }
+
+        public object VisitVariableExpr(Expr.Variable expr)
+        {
+            return _environment.Get(expr.Name);
         }
     }
 }

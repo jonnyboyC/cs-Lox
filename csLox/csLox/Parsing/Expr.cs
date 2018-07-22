@@ -10,13 +10,31 @@ namespace csLox.Parsing
 
         internal interface Visitor<T> 
         {
+            T VisitAssignExpr(Assign expr);
             T VisitGroupingExpr(Grouping expr);
+            T VisitLogicalExpr(Logical expr);
             T VisitLiteralExpr(Literal expr);
             T VisitConditionalExpr(Conditional expr);
             T VisitBinaryExpr(Binary expr);
             T VisitUnaryExpr(Unary expr);
+            T VisitVariableExpr(Variable expr);
         }
 
+
+        internal class Assign : Expr
+        {
+            internal Token Name { get; }
+            internal Expr Value { get; }
+            internal Assign(Token name, Expr value)
+            {
+                Name = name;
+                Value = value;
+            }
+            internal override T Accept<T>(Visitor<T> visitor)
+            {
+                return visitor.VisitAssignExpr(this);
+            }
+        }
 
         internal class Grouping : Expr
         {
@@ -28,6 +46,23 @@ namespace csLox.Parsing
             internal override T Accept<T>(Visitor<T> visitor)
             {
                 return visitor.VisitGroupingExpr(this);
+            }
+        }
+
+        internal class Logical : Expr
+        {
+            internal Expr Left { get; }
+            internal Token OpCode { get; }
+            internal Expr Right { get; }
+            internal Logical(Expr left, Token opCode, Expr right)
+            {
+                Left = left;
+                OpCode = opCode;
+                Right = right;
+            }
+            internal override T Accept<T>(Visitor<T> visitor)
+            {
+                return visitor.VisitLogicalExpr(this);
             }
         }
 
@@ -90,6 +125,19 @@ namespace csLox.Parsing
             internal override T Accept<T>(Visitor<T> visitor)
             {
                 return visitor.VisitUnaryExpr(this);
+            }
+        }
+
+        internal class Variable : Expr
+        {
+            internal Token Name { get; }
+            internal Variable(Token name)
+            {
+                Name = name;
+            }
+            internal override T Accept<T>(Visitor<T> visitor)
+            {
+                return visitor.VisitVariableExpr(this);
             }
         }
     }

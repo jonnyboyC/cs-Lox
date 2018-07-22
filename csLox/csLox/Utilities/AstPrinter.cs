@@ -68,5 +68,20 @@ namespace csLox.Utilities
             Console.WriteLine(new AstPrinter().Print(expression));
             Console.Read();
         }
+
+        public string VisitLogicalExpr(Expr.Logical expr)
+        {
+            return Parenthesize(expr.OpCode.Lexeme, expr.Left, expr.Right);
+        }
+
+        public string VisitAssignExpr(Expr.Assign expr)
+        {
+            return Parenthesize("=", expr.Value);
+        }
+
+        public string VisitVariableExpr(Expr.Variable expr)
+        {
+            return expr.Name.Lexeme;
+        }
     }
 }
