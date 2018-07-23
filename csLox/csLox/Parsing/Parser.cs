@@ -21,7 +21,7 @@ namespace csLox.Parsing
         {
             while (!IsAtEnd()) 
             {
-                Option<Stmt> declaration = Declaration();
+                Option<Stmt> declaration = Declaration(false);
                 if (declaration.HasValue)
                 {
                     yield return declaration.ValueOrFailure();
@@ -29,12 +29,12 @@ namespace csLox.Parsing
             }
         }
 
-        private Option<Stmt> Declaration()
+        private Option<Stmt> Declaration(bool insideLoop)
         {
             try 
             {
                 if (Match(TokenType.Var)) return VarDeclaration().Some();
-                return Statement().Some();
+                return Statement(insideLoop).Some();
             } catch (ParseError) {
                 Synchronize();
                 return Option.None<Stmt>();
@@ -53,15 +53,27 @@ namespace csLox.Parsing
             return new Stmt.Var(name, initializer);
         }
 
-        private Stmt Statement()
+        private Stmt Statement(bool insideLoop)
         {
             if (Match(TokenType.Print)) return PrintStatment();
             if (Match(TokenType.While)) return WhileStatement();
-            if (Match(TokenType.LeftBrace)) return new Stmt.Block(Block().ToList());
+            if (Match(TokenType.LeftBrace)) return new Stmt.Block(Block(insideLoop).ToList());
             if (Match(TokenType.For)) return ForStatement();
-            if (Match(TokenType.If)) return IfStatement();
+            if (Match(TokenType.If)) return IfStatement(insideLoop);
+
+            if (Match(TokenType.Break))
+            {
+                if (!insideLoop) throw Error(Previous(), "Break did not occur inside loop");
+                return BreakStatement();
+            }
 
             return ExpressionsStatement();
+        }
+
+        private Stmt BreakStatement()
+        {
+            Consume(TokenType.SemiColon, "Expected ';' after break.");
+            return new Stmt.Break();
         }
 
         private Stmt ForStatement()
@@ -95,7 +107,7 @@ namespace csLox.Parsing
                 increment = Expression();
             }
             Consume(TokenType.RightParen, "Epect ')' after for clauses.");
-            Stmt body = Statement();
+            Stmt body = Statement(true);
 
             if (increment != null)
             {
@@ -125,21 +137,21 @@ namespace csLox.Parsing
             Consume(TokenType.LeftParen, "Expect '(' after 'while'.");
             Expr condition = Expression();
             Consume(TokenType.RightParen, "Expect ')' after condition.None");
-            Stmt body = Statement();
+            Stmt body = Statement(true);
 
             return new Stmt.While(condition, body);
 
         }
 
-        private Stmt IfStatement()
+        private Stmt IfStatement(bool insideLoop)
         {
             Consume(TokenType.LeftParen, "Expect '(' after 'if'.");
             Expr condition = Expression();
             Consume(TokenType.RightParen, "Expect ')' after if ocndition.");
 
-            Stmt thenBranch = Statement();
+            Stmt thenBranch = Statement(insideLoop);
             Option<Stmt> elseBranch = Match(TokenType.Else)
-                ? Statement().Some()
+                ? Statement(insideLoop).Some()
                 : Option.None<Stmt>();
 
             return new Stmt.If(condition, thenBranch, elseBranch); 
@@ -164,11 +176,11 @@ namespace csLox.Parsing
             return new Stmt.ExpressionStmt(expr);
         }
 
-        private IEnumerable<Stmt> Block()
+        private IEnumerable<Stmt> Block(bool insideLoop)
         {
             while (!Check(TokenType.RightBrace) && !IsAtEnd()) 
             {
-                Option<Stmt> declaration = Declaration();
+                Option<Stmt> declaration = Declaration(insideLoop);
                 if (declaration.HasValue)
                 {
                     yield return declaration.ValueOrFailure();
@@ -278,7 +290,41 @@ namespace csLox.Parsing
                 return new Expr.Unary(opCode, right);
             }
 
-            return Primary();
+            return Call();
+        }
+
+        private Expr Call()
+        {
+            Expr expr = Primary();
+
+            while (true)
+            {
+                if (!Match(TokenType.LeftParen)) break;
+
+                expr = FinishCall(expr);
+            }
+
+            return expr;
+        }
+
+        private Expr FinishCall(Expr callee)
+        {
+            var arguments = new List<Expr>();
+            if (!Check(TokenType.RightParen))
+            {
+                do
+                {
+                    if (arguments.Count >= 32)
+                    {
+                        Error(Peek(), "Cannot have more than 32 arguments.");
+                    }
+                    arguments.Add(Expression());
+                }
+                while (Match(TokenType.Comma));
+            }
+
+            Token paren = Consume(TokenType.RightParen, "Expect ')' after arguments.");
+            return new Expr.Call(callee, paren, arguments);
         }
 
         private Expr Primary()

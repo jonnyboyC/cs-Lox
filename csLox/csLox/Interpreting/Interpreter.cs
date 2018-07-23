@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Optional;
-using csLox;
+using System.Linq;
 using csLox.Parsing;
 using csLox.Scanning;
 using Environment = csLox.Scoping.Environment;
@@ -10,7 +9,18 @@ namespace csLox.Interpreting
 {
     internal class Interpreter : Expr.Visitor<object>, Stmt.Visitor<Dummy>
     {
-        private Environment _environment = new Environment();
+        private readonly Environment _globals;
+        private Environment _environment;
+        private bool _break;
+
+        internal Interpreter()
+        {
+            _globals = new Environment();
+            _environment = _globals;
+            _break = false;
+
+            _globals.Define("clock", new Globals.Clock() as LoxCallable);
+        }
 
         internal void Interpret(IEnumerable<Stmt> statments)
         {
@@ -29,6 +39,7 @@ namespace csLox.Interpreting
 
         private void Execute(Stmt stmt)
         {
+            if (_break) return;
             stmt.Accept(this);
         }
 
@@ -50,11 +61,6 @@ namespace csLox.Interpreting
             }
         }
 
-        private object Evalutate(Expr expr)
-        {
-            return expr.Accept(this);
-        }
-
         public Dummy VisitExpressionStmtStmt(Stmt.ExpressionStmt stmt)
         {
             Evalutate(stmt.Expression);
@@ -65,6 +71,7 @@ namespace csLox.Interpreting
         {
             if (IsTruthy(Evalutate(stmt.Condition)))
             {
+
                 Execute(stmt.ThenBranch);
             }
             else
@@ -80,7 +87,9 @@ namespace csLox.Interpreting
             while (IsTruthy(Evalutate(stmt.Condition)))
             {
                 Execute(stmt.Body);
+                if (_break) break;
             }
+            _break = false;
 
             return null;
         }
@@ -106,6 +115,17 @@ namespace csLox.Interpreting
         {
             ExecuteBlock(stmt.Statements, new Environment(_environment));
             return null;
+        }
+
+        public Dummy VisitBreakStmt(Stmt.Break stmt)
+        {
+            _break = true;
+            return null;
+        }
+
+        private object Evalutate(Expr expr)
+        {
+            return expr.Accept(this);
         }
 
         public object VisitAssignExpr(Expr.Assign expr)
@@ -145,6 +165,7 @@ namespace csLox.Interpreting
                 case TokenType.Plus:
                     if (left is double leftDouble && right is double rightDouble)
                     {
+
                         return leftDouble + rightDouble;
                     }
                     if (left is string leftString && right is string rightString)
@@ -159,10 +180,32 @@ namespace csLox.Interpreting
                     return (double)left / denominator;
                 case TokenType.Star:
                     CheckNumberOperands(expr.OpCode, left, right);
-                    return (double)left + (double)right;
+                    return (double)left * (double)right;
             }
 
             throw new Exception();
+        }
+
+        public object VisitCallExpr(Expr.Call expr)
+        {
+            object callee = Evalutate(expr.Callee);
+
+            List<object> arguments = expr.Arguments
+                .Select(e => Evalutate(e))
+                .ToList();
+
+            if (callee is LoxCallable function)
+            {
+                if (arguments.Count != function.Arity())
+                {
+                    throw new RuntimeError(expr.Paren, $"Expected {function.Arity()} " +
+                        $"arguments but got {arguments.Count}.");
+                }
+
+                return function.Call(this, arguments);
+            }
+
+            throw new RuntimeError(expr.Paren, "Can only call functions and classes.");
         }
 
         public object VisitConditionalExpr(Expr.Conditional expr)

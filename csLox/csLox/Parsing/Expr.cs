@@ -16,6 +16,7 @@ namespace csLox.Parsing
             T VisitLiteralExpr(Literal expr);
             T VisitConditionalExpr(Conditional expr);
             T VisitBinaryExpr(Binary expr);
+            T VisitCallExpr(Call expr);
             T VisitUnaryExpr(Unary expr);
             T VisitVariableExpr(Variable expr);
         }
@@ -110,6 +111,23 @@ namespace csLox.Parsing
             internal override T Accept<T>(Visitor<T> visitor)
             {
                 return visitor.VisitBinaryExpr(this);
+            }
+        }
+
+        internal class Call : Expr
+        {
+            internal Expr Callee { get; }
+            internal Token Paren { get; }
+            internal List<Expr> Arguments { get; }
+            internal Call(Expr callee, Token paren, List<Expr> arguments)
+            {
+                Callee = callee;
+                Paren = paren;
+                Arguments = arguments;
+            }
+            internal override T Accept<T>(Visitor<T> visitor)
+            {
+                return visitor.VisitCallExpr(this);
             }
         }
 

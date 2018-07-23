@@ -87,10 +87,21 @@ namespace csLox
             Parser parser = new Parser(tokens);
             Stmt[] statements = parser.Parse().ToArray();
 
+
+            var astPrinter = new AstPrinter();
+            foreach (Stmt stmt in statements)
+            {
+                foreach (string print in astPrinter.PrintStmt(stmt))
+                {
+                    Console.WriteLine(print);
+                }
+            }
+
             if (HadError) return 65;
             Interpreter.Interpret(statements);
             if (HadRuntimeError) return 70;
 
+            Console.Read();
             return 0;
         }
     }

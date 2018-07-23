@@ -17,6 +17,7 @@ namespace csLox.Parsing
             T VisitPrintStmt(Print stmt);
             T VisitVarStmt(Var stmt);
             T VisitWhileStmt(While stmt);
+            T VisitBreakStmt(Break stmt);
         }
 
 
@@ -103,6 +104,17 @@ namespace csLox.Parsing
             internal override T Accept<T>(Visitor<T> visitor)
             {
                 return visitor.VisitWhileStmt(this);
+            }
+        }
+
+        internal class Break : Stmt
+        {
+            internal Break()
+            {
+            }
+            internal override T Accept<T>(Visitor<T> visitor)
+            {
+                return visitor.VisitBreakStmt(this);
             }
         }
     }

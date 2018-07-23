@@ -18,6 +18,7 @@ namespace csLox.Scanning
             = new Dictionary<string, TokenType>
             {
                 {"and",     TokenType.And},
+                {"break",   TokenType.Break},
                 {"class",   TokenType.Class},
                 {"else",    TokenType.Else},
                 {"false",   TokenType.False},

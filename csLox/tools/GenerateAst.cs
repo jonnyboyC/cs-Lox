@@ -25,6 +25,7 @@ namespace tools
                     "Literal    : Object value",
                     "Conditional: Expr condition, Expr trueExpr, Expr falseExpr",
                     "Binary     : Expr left, Token opCode, Expr right",
+                    "Call       : Expr callee, Token paren, List<Expr> arguments",
                     "Unary      : Token opCode, Expr right",
                     "Variable   : Token name"
                 },
@@ -38,7 +39,8 @@ namespace tools
                     "If             : Expr condition, Stmt thenBranch, Option<Stmt> elseBranch",
                     "Print          : Expr expression",
                     "Var            : Token name, Option<Expr> initializer",
-                    "While          : Expr condition, Stmt body"
+                    "While          : Expr condition, Stmt body",
+                    "Break          : ",
                 },
                 "csLox.Scanning",
                 "Optional"
@@ -147,7 +149,7 @@ namespace tools
                 string[] fields = fieldList.Split(",");
 
                 Name = typeSplit[0].Trim();
-                Fields = fields.Select(f => new AstField(f)).ToList();
+                Fields = fields.Where(f => !string.IsNullOrEmpty(f)).Select(f => new AstField(f)).ToList();
             }
         }
 

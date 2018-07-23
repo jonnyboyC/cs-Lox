@@ -1,22 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using csLox.Parsing;
-using csLox.Linq;
 using csLox.Scanning;
 
 namespace csLox.Utilities
 {
-    internal class AstPrinter : Expr.Visitor<String>
+    internal class AstPrinter : Expr.Visitor<string>, Stmt.Visitor<IEnumerable<string>>
     {
-        public string Print(Expr expr)
+        public string PrintExpr(Expr expr)
         {
             return expr.Accept(this);
         }
 
+        public IEnumerable<string> PrintStmt(Stmt stmt)
+        {
+            return stmt.Accept(this);
+        }
+
         public string VisitConditionalExpr(Expr.Conditional expr)
         {
-            return Parenthesize("Conditional", expr.Condition, expr.TrueExpr, expr.FalseExpr);
+            return Parenthesize("?:", expr.Condition, expr.TrueExpr, expr.FalseExpr);
         }
 
         public string VisitBinaryExpr(Expr.Binary expr)
@@ -55,20 +60,6 @@ namespace csLox.Utilities
             return builder.ToString();
         }
 
-        public static void Main(string[] args)
-        {
-            Expr expression = new Expr.Binary(
-                new Expr.Unary(
-                    new Token(TokenType.Minus, "-", null, 1),
-                    new Expr.Literal(123)),
-                new Token(TokenType.Star, "*", null, 1),
-                    new Expr.Grouping(
-                        new Expr.Literal(45.67)));
-
-            Console.WriteLine(new AstPrinter().Print(expression));
-            Console.Read();
-        }
-
         public string VisitLogicalExpr(Expr.Logical expr)
         {
             return Parenthesize(expr.OpCode.Lexeme, expr.Left, expr.Right);
@@ -76,12 +67,91 @@ namespace csLox.Utilities
 
         public string VisitAssignExpr(Expr.Assign expr)
         {
-            return Parenthesize("=", expr.Value);
+            return $"{expr.Name.Lexeme} = {PrintExpr(expr.Value)}";
         }
 
         public string VisitVariableExpr(Expr.Variable expr)
         {
             return expr.Name.Lexeme;
+        }
+
+        public IEnumerable<string> VisitBlockStmt(Stmt.Block stmt)
+        {
+            StringBuilder builder = new StringBuilder();
+
+            yield return "{";
+            foreach (Stmt subStmt in stmt.Statements)
+            {
+                foreach (string print in PrintStmt(subStmt))
+                {
+                    yield return $"  {print}";
+                }
+            }
+            yield return "}";
+        }
+
+        public IEnumerable<string> VisitExpressionStmtStmt(Stmt.ExpressionStmt stmt)
+        {
+            yield return $"{PrintExpr(stmt.Expression)};";
+        }
+
+        public IEnumerable<string> VisitIfStmt(Stmt.If stmt)
+        {
+            string[] ifBody = PrintStmt(stmt.ThenBranch).ToArray();
+            yield return $"if ({PrintExpr(stmt.Condition)}) {ifBody[0]}";
+
+            foreach (string print in ifBody.Skip(1))
+            {
+                yield return print;
+            }
+
+            string[] elseBody = stmt.ElseBranch.Match(
+                some: elseStmt => PrintStmt(elseStmt).ToArray(),
+                none: () => new string[0]
+            );
+
+            if (elseBody.Any())
+            {
+                yield return $"else {elseBody[0]}";
+                foreach (string print in elseBody.Skip(1))
+                {
+                    yield return print;
+                }
+            }
+        }
+
+        public IEnumerable<string> VisitPrintStmt(Stmt.Print stmt)
+        {
+            yield return $"print {PrintExpr(stmt.Expression)};";
+        }
+
+        public IEnumerable<string> VisitVarStmt(Stmt.Var stmt)
+        {
+            yield return stmt.Initializer.Match(
+                some: init => $"var {stmt.Name} = {PrintExpr(init)}",
+                none: () => $"var {stmt.Name};"
+            );
+        }
+
+        public IEnumerable<string> VisitWhileStmt(Stmt.While stmt)
+        {
+            string[] whileBody = PrintStmt(stmt.Body).ToArray();
+            yield return $"if ({PrintExpr(stmt.Condition)}) {whileBody[0]}";
+
+            foreach (string print in whileBody.Skip(1))
+            {
+                yield return print;
+            }
+        }
+
+        public IEnumerable<string> VisitBreakStmt(Stmt.Break stmt)
+        {
+            yield return "break;";
+        }
+
+        public IEnumerable<string> VisitContinueStmt(Stmt.Continue stmt)
+        {
+            yield return "return;";
         }
     }
 }
