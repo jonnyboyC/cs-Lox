@@ -11,6 +11,7 @@ namespace csLox.Parsing
     {
         private readonly IReadOnlyList<Token> _tokens;
         private int _current = 0;
+        private const int MaxParameters = 32;
 
         internal Parser(IEnumerable<Token> tokens)
         {
@@ -33,6 +34,7 @@ namespace csLox.Parsing
         {
             try 
             {
+                if (Match(TokenType.Fun)) return Function("function");
                 if (Match(TokenType.Var)) return VarDeclaration().Some();
                 return Statement(insideLoop).Some();
             } catch (ParseError) {
@@ -51,6 +53,29 @@ namespace csLox.Parsing
 
             Consume(TokenType.SemiColon, "Expect ';' after variable declaration.");
             return new Stmt.Var(name, initializer);
+        }
+
+        private Stmt.Function Function(string kind)
+        {
+            Token name = Consume(TokenType.Identifier, $"Expect {kind} name.");
+
+            Consume(TokenType.LeftParen, $"Expect '(' after {kind} name.");
+            var parameters = new List<Token>();
+            if (!Check(TokenType.RightParen))
+            {
+                do
+                {
+                    if (parameters.Count >= MaxParameters)
+                    {
+                        Error(Peek(), $"Cannot have more than {MaxParameters} parameters.");
+                    }
+                }
+                while (Match(TokenType.Comma));
+            }
+            Consume(TokenType.RightParen, "Expect ')' after parameters.");
+            Consume(TokenType.LeftBrace, $"Expect '{{' before {kind} body.");
+            List<Stmt> body = Block(false).ToList();
+            return new Stmt.Function(name, parameters, body);
         }
 
         private Stmt Statement(bool insideLoop)
@@ -314,9 +339,9 @@ namespace csLox.Parsing
             {
                 do
                 {
-                    if (arguments.Count >= 32)
+                    if (arguments.Count >= MaxParameters)
                     {
-                        Error(Peek(), "Cannot have more than 32 arguments.");
+                        Error(Peek(), $"Cannot have more than {MaxParameters} arguments.");
                     }
                     arguments.Add(Expression());
                 }

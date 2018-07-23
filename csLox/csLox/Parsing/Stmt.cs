@@ -13,6 +13,7 @@ namespace csLox.Parsing
         {
             T VisitBlockStmt(Block stmt);
             T VisitExpressionStmtStmt(ExpressionStmt stmt);
+            T VisitFunctionStmt(Function stmt);
             T VisitIfStmt(If stmt);
             T VisitPrintStmt(Print stmt);
             T VisitVarStmt(Var stmt);
@@ -44,6 +45,23 @@ namespace csLox.Parsing
             internal override T Accept<T>(Visitor<T> visitor)
             {
                 return visitor.VisitExpressionStmtStmt(this);
+            }
+        }
+
+        internal class Function : Stmt
+        {
+            internal Token Name { get; }
+            internal List<Token> Parameter { get; }
+            internal List<Stmt> Body { get; }
+            internal Function(Token name, List<Token> parameter, List<Stmt> body)
+            {
+                Name = name;
+                Parameter = parameter;
+                Body = body;
+            }
+            internal override T Accept<T>(Visitor<T> visitor)
+            {
+                return visitor.VisitFunctionStmt(this);
             }
         }
 

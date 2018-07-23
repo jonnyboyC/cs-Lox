@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "csLox": {
+      "commandName": "Project",
+      "commandLineArgs": "../../../../test/fib.lox"
+    }
+  }
+}

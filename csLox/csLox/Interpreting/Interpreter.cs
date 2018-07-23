@@ -9,17 +9,17 @@ namespace csLox.Interpreting
 {
     internal class Interpreter : Expr.Visitor<object>, Stmt.Visitor<Dummy>
     {
-        private readonly Environment _globals;
+        public Environment Globals { get; }
         private Environment _environment;
         private bool _break;
 
         internal Interpreter()
         {
-            _globals = new Environment();
-            _environment = _globals;
+            Globals = new Environment();
+            _environment = Globals;
             _break = false;
 
-            _globals.Define("clock", new Globals.Clock() as LoxCallable);
+            Globals.Define("clock", new Globals.Clock() as LoxCallable);
         }
 
         internal void Interpret(IEnumerable<Stmt> statments)
@@ -37,13 +37,13 @@ namespace csLox.Interpreting
             }
         }
 
-        private void Execute(Stmt stmt)
+        internal void Execute(Stmt stmt)
         {
             if (_break) return;
             stmt.Accept(this);
         }
 
-        private void ExecuteBlock(List<Stmt> statments, Environment environment)
+        internal void ExecuteBlock(List<Stmt> statments, Environment environment)
         {
             Environment previous = _environment;
             try 
