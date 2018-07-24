@@ -34,7 +34,7 @@ namespace csLox.Parsing
         {
             try 
             {
-                if (Match(TokenType.Fun)) return Function("function");
+                if (Match(TokenType.Fun)) return Function("function").Some();
                 if (Match(TokenType.Var)) return VarDeclaration().Some();
                 return Statement(insideLoop).Some();
             } catch (ParseError) {
@@ -55,7 +55,7 @@ namespace csLox.Parsing
             return new Stmt.Var(name, initializer);
         }
 
-        private Stmt.Function Function(string kind)
+        private Stmt Function(string kind)
         {
             Token name = Consume(TokenType.Identifier, $"Expect {kind} name.");
 

@@ -149,9 +149,25 @@ namespace csLox.Utilities
             yield return "break;";
         }
 
-        public IEnumerable<string> VisitContinueStmt(Stmt.Continue stmt)
+        public string VisitCallExpr(Expr.Call expr)
         {
-            yield return "return;";
+            string arguments = string.Join(", ", expr.Arguments.Select(e => PrintExpr(e)));
+
+            return $"{PrintExpr(expr.Callee)}({arguments})";
+        }
+
+        public IEnumerable<string> VisitFunctionStmt(Stmt.Function stmt)
+        {
+            string parameters = string.Join(", ", stmt.Parameter.Select(p => p.Lexeme));
+            string[] body = stmt.Body.SelectMany(s => PrintStmt(s)).ToArray();
+            
+            yield return $"fun {stmt.Name}({parameters}) {{";
+
+            foreach (string bodyStmt in body)
+            {
+                yield return $"  {bodyStmt}";
+            }
+            yield return "}";
         }
     }
 }

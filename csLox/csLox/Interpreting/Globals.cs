@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Optional;
 
 namespace csLox.Interpreting
 {
@@ -8,15 +9,15 @@ namespace csLox.Interpreting
     {
         public abstract int Arity { get; }
 
-        public abstract object Call(Interpreter interpreter, List<object> arguments);
+        public abstract Option<object> Call(Interpreter interpreter, List<object> arguments);
 
         internal class Clock : Globals
         {
             public override int Arity { get; } = 0;
 
-            public override object Call(Interpreter interpreter, List<object> arguments)
+            public override Option<object> Call(Interpreter interpreter, List<object> arguments)
             {
-                return (double)DateTime.Now.Millisecond / 1000.0;
+                return ((object)((double)DateTime.Now.Millisecond / 1000.0)).Some();
             }
         }
     }

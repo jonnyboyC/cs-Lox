@@ -196,9 +196,9 @@ namespace csLox.Interpreting
 
             if (callee is LoxCallable function)
             {
-                if (arguments.Count != function.Arity())
+                if (arguments.Count != function.Arity)
                 {
-                    throw new RuntimeError(expr.Paren, $"Expected {function.Arity()} " +
+                    throw new RuntimeError(expr.Paren, $"Expected {function.Arity} " +
                         $"arguments but got {arguments.Count}.");
                 }
 
@@ -332,6 +332,11 @@ namespace csLox.Interpreting
         public object VisitVariableExpr(Expr.Variable expr)
         {
             return _environment.Get(expr.Name);
+        }
+
+        public Dummy VisitFunctionStmt(Stmt.Function stmt)
+        {
+            throw new NotImplementedException();
         }
     }
 }
