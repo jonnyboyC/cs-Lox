@@ -81,6 +81,7 @@ namespace csLox.Parsing
         private Stmt Statement(bool insideLoop)
         {
             if (Match(TokenType.Print)) return PrintStatment();
+            if (Match(TokenType.Return)) return ReturnStatement();
             if (Match(TokenType.While)) return WhileStatement();
             if (Match(TokenType.LeftBrace)) return new Stmt.Block(Block(insideLoop).ToList());
             if (Match(TokenType.For)) return ForStatement();
@@ -93,6 +94,17 @@ namespace csLox.Parsing
             }
 
             return ExpressionsStatement();
+        }
+
+        private Stmt ReturnStatement()
+        {
+            Token keyword = Previous();
+            Option<Expr> value = !Check(TokenType.SemiColon)
+                ? Expression().Some()
+                : Option.None<Expr>();
+
+            Consume(TokenType.SemiColon, "Expect ';' after return value");
+            return new Stmt.Return(keyword, value);
         }
 
         private Stmt BreakStatement()

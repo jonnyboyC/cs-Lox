@@ -16,6 +16,7 @@ namespace csLox.Parsing
             T VisitFunctionStmt(Function stmt);
             T VisitIfStmt(If stmt);
             T VisitPrintStmt(Print stmt);
+            T VisitReturnStmt(Return stmt);
             T VisitVarStmt(Var stmt);
             T VisitWhileStmt(While stmt);
             T VisitBreakStmt(Break stmt);
@@ -92,6 +93,21 @@ namespace csLox.Parsing
             internal override T Accept<T>(Visitor<T> visitor)
             {
                 return visitor.VisitPrintStmt(this);
+            }
+        }
+
+        internal class Return : Stmt
+        {
+            internal Token Keyword { get; }
+            internal Option<Expr> Value { get; }
+            internal Return(Token keyword, Option<Expr> value)
+            {
+                Keyword = keyword;
+                Value = value;
+            }
+            internal override T Accept<T>(Visitor<T> visitor)
+            {
+                return visitor.VisitReturnStmt(this);
             }
         }
 

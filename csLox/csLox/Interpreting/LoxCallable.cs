@@ -8,6 +8,6 @@ namespace csLox.Interpreting
     interface LoxCallable
     {
         int Arity { get; }
-        Option<object> Call(Interpreter interpreter, List<object> arguments);
+        object Call(Interpreter interpreter, List<object> arguments);
     }
 }

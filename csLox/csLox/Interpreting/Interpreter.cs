@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using csLox.Parsing;
 using csLox.Scanning;
+using Optional;
+using Optional.Unsafe;
 using Environment = csLox.Scoping.Environment;
 
 namespace csLox.Interpreting
@@ -11,13 +13,11 @@ namespace csLox.Interpreting
     {
         public Environment Globals { get; }
         private Environment _environment;
-        private bool _break;
 
         internal Interpreter()
         {
             Globals = new Environment();
             _environment = Globals;
-            _break = false;
 
             Globals.Define("clock", new Globals.Clock() as LoxCallable);
         }
@@ -39,7 +39,6 @@ namespace csLox.Interpreting
 
         internal void Execute(Stmt stmt)
         {
-            if (_break) return;
             stmt.Accept(this);
         }
 
@@ -84,12 +83,18 @@ namespace csLox.Interpreting
 
         public Dummy VisitWhileStmt(Stmt.While stmt)
         {
-            while (IsTruthy(Evalutate(stmt.Condition)))
+            try
             {
-                Execute(stmt.Body);
-                if (_break) break;
+                while (IsTruthy(Evalutate(stmt.Condition)))
+                {
+                    Execute(stmt.Body);
+                }
             }
-            _break = false;
+            catch (Break)
+            {
+
+            }
+
 
             return null;
         }
@@ -119,8 +124,7 @@ namespace csLox.Interpreting
 
         public Dummy VisitBreakStmt(Stmt.Break stmt)
         {
-            _break = true;
-            return null;
+            throw new Break();
         }
 
         private object Evalutate(Expr expr)
@@ -336,7 +340,18 @@ namespace csLox.Interpreting
 
         public Dummy VisitFunctionStmt(Stmt.Function stmt)
         {
-            throw new NotImplementedException();
+            LoxFunction function = new LoxFunction(stmt, _environment);
+            _environment.Define(stmt.Name.Lexeme, function);
+            return null;
+        }
+
+        public Dummy VisitReturnStmt(Stmt.Return stmt)
+        {
+            object value = stmt.Value.HasValue
+                ? Evalutate(stmt.Value.ValueOrFailure())
+                : null;
+
+            throw new Return(value);
         }
     }
 }

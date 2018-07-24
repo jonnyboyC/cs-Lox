@@ -169,5 +169,13 @@ namespace csLox.Utilities
             }
             yield return "}";
         }
+
+        public IEnumerable<string> VisitReturnStmt(Stmt.Return stmt)
+        {
+            yield return stmt.Value.Match(
+                some: value => $"return {value};",
+                none: () => "return;"
+            );
+        }
     }
 }

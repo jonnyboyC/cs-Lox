@@ -39,6 +39,7 @@ namespace tools
                     "Function       : Token name, List<Token> parameter, List<Stmt> body",
                     "If             : Expr condition, Stmt thenBranch, Option<Stmt> elseBranch",
                     "Print          : Expr expression",
+                    "Return         : Token keyword, Option<Expr> value",
                     "Var            : Token name, Option<Expr> initializer",
                     "While          : Expr condition, Stmt body",
                     "Break          : ",
