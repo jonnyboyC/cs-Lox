@@ -155,6 +155,15 @@ namespace csLox.Interpreting
         {
             object value = Evalutate(expr.Value);
 
+            if (_locals.TryGetValue(expr, out int distance))
+            {
+                _environment.AssignAt(distance, expr.Name, value);
+            }
+            else
+            {
+                Globals.Assign(expr.Name, value);
+            }
+
             _environment.Assign(expr.Name, value);
             return value;
         }
@@ -359,7 +368,19 @@ namespace csLox.Interpreting
 
         public object VisitVariableExpr(Expr.Variable expr)
         {
-            return _environment.Get(expr.Name);
+            return LookUpVariable(expr.Name, expr);
+        }
+
+        private object LookUpVariable(Token name, Expr expr)
+        {
+            if (_locals.TryGetValue(expr, out int distance))
+            {
+                return _environment.GetAt(distance, name.Lexeme);
+            } 
+            else
+            {
+                return Globals.Get(name);
+            }
         }
     }
 }

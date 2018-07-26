@@ -6,6 +6,7 @@ using csLox.Parsing;
 using csLox.Utilities;
 using csLox.Interpreting;
 using csLox.Exceptions;
+using csLox.Resolving;
 
 namespace csLox
 {
@@ -97,6 +98,10 @@ namespace csLox
             }
 
             if (HadError) return 65;
+
+            Resolver resolver = new Resolver(Interpreter);
+            resolver.Resolve(statements);
+
             Interpreter.Interpret(statements);
             if (HadRuntimeError) return 70;
 

@@ -5,7 +5,7 @@ using System.Linq;
 using csLox.Interpreting;
 using csLox.Parsing;
 using csLox.Scanning;
-
+using csLox.Linq;
 
 namespace csLox.Resolving
 {
@@ -13,13 +13,16 @@ namespace csLox.Resolving
     {
         private readonly Interpreter _interpreter;
         private readonly Stack<Dictionary<string, bool>> _scopes = new Stack<Dictionary<string, bool>>();
+        private FunctionType _currentFunction = FunctionType.None;
+
+        private enum FunctionType { None, Function }
 
         internal Resolver(Interpreter interpreter)
         {
             _interpreter = interpreter;
         }
 
-        private void Resolve(List<Stmt> statements)
+        internal void Resolve(IEnumerable<Stmt> statements)
         {
             foreach (Stmt statement in statements)
             {
@@ -27,7 +30,7 @@ namespace csLox.Resolving
             }
         }
 
-        private void Resolve(Stmt stmt)
+        internal void Resolve(Stmt stmt)
         {
             stmt.Accept(this);
         }
@@ -37,8 +40,11 @@ namespace csLox.Resolving
             expr.Accept(this);
         }
 
-        private void ResolveFunction(Stmt.Function function)
+        private void ResolveFunction(Stmt.Function function, FunctionType type)
         {
+            FunctionType enclosingFunction = _currentFunction;
+            _currentFunction = type;
+
             BeginScope();
             foreach (Token param in function.Parameter)
             {
@@ -48,6 +54,8 @@ namespace csLox.Resolving
 
             Resolve(function.Body);
             EndScope();
+
+            _currentFunction = enclosingFunction;
         }
 
         private void ResolveLocal(Expr expr, Token name)
@@ -75,16 +83,21 @@ namespace csLox.Resolving
 
         private void Declare(Token name)
         {
-            if (_scopes.Count == 0) return;
+            if (_scopes.None()) return;
 
             Dictionary<string, bool> scope = _scopes.Peek();
-            scope.Add(name.Lexeme, false);
+            if (scope.ContainsKey(name.Lexeme))
+            {
+                Lox.Error(name, "Variable with this name already declared in this scope.");
+            }
+
+            scope[name.Lexeme] = false;
         }
 
         private void Define(Token name)
         {
-            if (_scopes.Count == 0) return;
-            _scopes.Peek().Add(name.Lexeme, true);
+            if (_scopes.None()) return;
+            _scopes.Peek()[name.Lexeme] = true;
         }
 
         public LoxVoid VisitAssignExpr(Expr.Assign expr)
@@ -142,7 +155,7 @@ namespace csLox.Resolving
             Declare(stmt.Name);
             Define(stmt.Name);
 
-            ResolveFunction(stmt);
+            ResolveFunction(stmt, FunctionType.Function);
 
             return null;
         }
@@ -198,6 +211,11 @@ namespace csLox.Resolving
 
         public LoxVoid VisitReturnStmt(Stmt.Return stmt)
         {
+            if (_currentFunction is FunctionType.None)
+            {
+                Lox.Error(stmt.Keyword, "Cannot return from top-level code.");
+            }
+
             stmt.Value.MatchSome(expr => Resolve(expr));
             return null;
         }
@@ -210,9 +228,9 @@ namespace csLox.Resolving
 
         public LoxVoid VisitVariableExpr(Expr.Variable expr)
         {
-            if (_scopes.Count == 0 && _scopes.Peek()[expr.Name.Lexeme] == false)
+            if (_scopes.Any() && _scopes.Peek().TryGetValue(expr.Name.Lexeme, out bool set) && set == false)
             {
-                Lox.Error(expr.Name, "Cannot read local variable in its own initializer.");
+               Lox.Error(expr.Name, "Cannot read local variable in its own initializer.");
             }
 
             ResolveLocal(expr, expr.Name);

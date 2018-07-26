@@ -47,6 +47,38 @@ namespace csLox.Scoping
             );
         }
 
+        internal object GetAt(int distance, string name)
+        {
+            return Ancestor(distance).Match(
+                some: env => env.values[name],
+                none: () => null
+            );
+        }
+
+        internal void AssignAt(int distance, Token name, object value)
+        {
+            Ancestor(distance).Match(
+                some: env => env.values[name.Lexeme] = value,
+                none: () => Lox.RuntimeError(
+                    new RuntimeError(name, $"Unable to assign to variable {name.Lexeme} value {value}")
+                )
+            );
+        }
+
+        internal Option<Environment> Ancestor(int distance)
+        {
+            Option<Environment> environment = this.Some();
+            for (int i = 0; i < distance; i++)
+            {
+                environment = environment.Match(
+                    some: env => env._enclosing,
+                    none: Option.None<Environment>
+                );
+            }
+
+            return environment;
+        }
+
         internal object Get(Token name)
         {
             if (values.TryGetValue(name.Lexeme, out var value))
