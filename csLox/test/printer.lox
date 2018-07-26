@@ -1,0 +1,7 @@
+var printer = fun (x) {
+	print x;
+};
+
+printer("cat");
+printer("dog");
+printer(14);

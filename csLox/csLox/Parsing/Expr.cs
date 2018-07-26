@@ -12,6 +12,7 @@ namespace csLox.Parsing
         {
             T VisitAssignExpr(Assign expr);
             T VisitGroupingExpr(Grouping expr);
+            T VisitLambdaExpr(Lambda expr);
             T VisitLogicalExpr(Logical expr);
             T VisitLiteralExpr(Literal expr);
             T VisitConditionalExpr(Conditional expr);
@@ -47,6 +48,21 @@ namespace csLox.Parsing
             internal override T Accept<T>(Visitor<T> visitor)
             {
                 return visitor.VisitGroupingExpr(this);
+            }
+        }
+
+        internal class Lambda : Expr
+        {
+            internal List<Token> Parameter { get; }
+            internal List<Stmt> Body { get; }
+            internal Lambda(List<Token> parameter, List<Stmt> body)
+            {
+                Parameter = parameter;
+                Body = body;
+            }
+            internal override T Accept<T>(Visitor<T> visitor)
+            {
+                return visitor.VisitLambdaExpr(this);
             }
         }
 

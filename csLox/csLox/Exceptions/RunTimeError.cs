@@ -1,7 +1,7 @@
 using System;
 using csLox.Scanning;
 
-namespace csLox
+namespace csLox.Exceptions
 {
     internal class RuntimeError: Exception
     {

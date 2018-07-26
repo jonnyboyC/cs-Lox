@@ -5,7 +5,7 @@ using Optional;
 
 namespace csLox.Interpreting
 {
-    internal abstract class Globals : LoxCallable
+    internal abstract class Globals : ILoxCallable
     {
         public abstract int Arity { get; }
 

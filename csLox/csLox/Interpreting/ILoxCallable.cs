@@ -5,7 +5,7 @@ using System.Text;
 
 namespace csLox.Interpreting
 {
-    interface LoxCallable
+    interface ILoxCallable
     {
         int Arity { get; }
         object Call(Interpreter interpreter, List<object> arguments);

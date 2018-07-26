@@ -1,16 +1,17 @@
 ﻿using System.Collections.Generic;
-using csLox.Parsing;
 using csLox.Exceptions;
+using csLox.Parsing;
 using Environment = csLox.Scoping.Environment;
+
 
 namespace csLox.Interpreting
 {
-    internal class LoxFunction : ILoxCallable
+    class LoxLambda : ILoxCallable
     {
-        private readonly Stmt.Function _declaration;
+        private readonly Expr.Lambda _declaration;
         private readonly Environment _closure;
 
-        internal LoxFunction(Stmt.Function declaration, Environment closure)
+        internal LoxLambda(Expr.Lambda declaration, Environment closure)
         {
             _closure = closure;
             _declaration = declaration;
@@ -41,7 +42,7 @@ namespace csLox.Interpreting
 
         public override string ToString()
         {
-            return $"<fn {_declaration.Name.Lexeme}>";
+            return $"<anonymous>";
         }
     }
 }

@@ -1,7 +1,7 @@
-using System;
 using System.Collections.Generic;
-using csLox.Scanning;
 using Optional;
+using csLox.Exceptions;
+using csLox.Scanning;
 
 namespace csLox.Scoping
 {

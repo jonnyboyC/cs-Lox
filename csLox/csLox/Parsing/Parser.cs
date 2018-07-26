@@ -1,9 +1,10 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using csLox.Scanning;
 using Optional;
 using Optional.Unsafe;
+using csLox.Scanning;
+using csLox.Exceptions;
 
 namespace csLox.Parsing
 {
@@ -58,8 +59,16 @@ namespace csLox.Parsing
         private Stmt Function(string kind)
         {
             Token name = Consume(TokenType.Identifier, $"Expect {kind} name.");
-
             Consume(TokenType.LeftParen, $"Expect '(' after {kind} name.");
+
+            List<Token> parameters;
+            List<Stmt> body;
+            (parameters, body) = FunctionBody(kind);
+            return new Stmt.Function(name, parameters, body);
+        }
+
+        private (List<Token> parameters, List<Stmt> body) FunctionBody(string kind)
+        {
             var parameters = new List<Token>();
             if (!Check(TokenType.RightParen))
             {
@@ -69,13 +78,16 @@ namespace csLox.Parsing
                     {
                         Error(Peek(), $"Cannot have more than {MaxParameters} parameters.");
                     }
+
+                    parameters.Add(Consume(TokenType.Identifier, "Expect parameter"));
                 }
                 while (Match(TokenType.Comma));
             }
             Consume(TokenType.RightParen, "Expect ')' after parameters.");
             Consume(TokenType.LeftBrace, $"Expect '{{' before {kind} body.");
             List<Stmt> body = Block(false).ToList();
-            return new Stmt.Function(name, parameters, body);
+
+            return (parameters, body);
         }
 
         private Stmt Statement(bool insideLoop)
@@ -115,7 +127,7 @@ namespace csLox.Parsing
 
         private Stmt ForStatement()
         {
-            Consume(TokenType.LeftParen, "Expect '(' after 'for'.");
+            Consume(TokenType.LeftParen, "Expect ')' after 'for'.");
 
             Stmt initializer;
             if (Match(TokenType.SemiColon))
@@ -265,13 +277,13 @@ namespace csLox.Parsing
 
         private Expr Or()
         {
-            return BinaryExpr(() => And(), 
+            return LogicalExpr(() => And(), 
                 TokenType.Or);
         }
 
         private Expr And()
         {
-            return BinaryExpr(() => Equality(), 
+            return LogicalExpr(() => Equality(), 
                 TokenType.And);
         }
 
@@ -313,6 +325,20 @@ namespace csLox.Parsing
                 Token opCode = Previous();
                 Expr right = resurse();
                 expr = new Expr.Binary(expr, opCode, right);
+            }
+
+            return expr;
+        }
+
+        private Expr LogicalExpr(Func<Expr> resurse, params TokenType[] types)
+        {
+            Expr expr = resurse();
+
+            if (Match(types))
+            {
+                Token opCode = Previous();
+                Expr right = resurse();
+                expr = new Expr.Logical(expr, opCode, right);
             }
 
             return expr;
@@ -387,7 +413,22 @@ namespace csLox.Parsing
                 return new Expr.Grouping(expr);
             }
 
+            if (Match(TokenType.Fun))
+            {
+                return Lambda();
+            }
+
             throw Error(Peek(), "Expected expression.");
+        }
+
+        private Expr Lambda()
+        {
+            Consume(TokenType.LeftParen, $"Expect '(' after fun.");
+
+            List<Token> parameters;
+            List<Stmt> body;
+            (parameters, body) = FunctionBody("lambda");
+            return new Expr.Lambda(parameters, body);
         }
 
         private bool Match(params TokenType[] types)

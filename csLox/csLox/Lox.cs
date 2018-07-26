@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Optional;
 using csLox.Scanning;
 using csLox.Parsing;
 using csLox.Utilities;
 using csLox.Interpreting;
+using csLox.Exceptions;
 
 namespace csLox
 {

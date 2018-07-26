@@ -1,0 +1,11 @@
+fun alot(fn) {
+	for (var i = 0; i < 100; i = i + 1) {
+		if (fn(i)) {
+			print i;
+		}
+	}
+}
+
+alot(fun (x) {
+	return x > 20 and x < 60;
+});

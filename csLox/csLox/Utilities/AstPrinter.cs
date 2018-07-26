@@ -177,5 +177,13 @@ namespace csLox.Utilities
                 none: () => "return;"
             );
         }
+
+        public string VisitLambdaExpr(Expr.Lambda expr)
+        {
+            string parameters = string.Join(", ", expr.Parameter.Select(p => p.Lexeme));
+            string body = string.Join(" ", expr.Body.SelectMany(s => PrintStmt(s)));
+
+            return $"fun ({parameters}) {{ {body} }}";
+        }
     }
 }

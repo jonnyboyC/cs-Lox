@@ -1,25 +1,26 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Optional.Unsafe;
+using csLox.Exceptions;
 using csLox.Parsing;
 using csLox.Scanning;
-using Optional;
-using Optional.Unsafe;
 using Environment = csLox.Scoping.Environment;
 
 namespace csLox.Interpreting
 {
-    internal class Interpreter : Expr.Visitor<object>, Stmt.Visitor<Dummy>
+    internal class Interpreter : Expr.Visitor<object>, Stmt.Visitor<LoxVoid>
     {
         public Environment Globals { get; }
         private Environment _environment;
+        private readonly Dictionary<Expr, int> _locals = new Dictionary<Expr, int>();
 
         internal Interpreter()
         {
             Globals = new Environment();
             _environment = Globals;
 
-            Globals.Define("clock", new Globals.Clock() as LoxCallable);
+            Globals.Define("clock", new Globals.Clock() as ILoxCallable);
         }
 
         internal void Interpret(IEnumerable<Stmt> statments)
@@ -42,6 +43,11 @@ namespace csLox.Interpreting
             stmt.Accept(this);
         }
 
+        internal void Resolve(Expr expr, int depth)
+        {
+            _locals[expr] = depth;
+        }
+
         internal void ExecuteBlock(List<Stmt> statments, Environment environment)
         {
             Environment previous = _environment;
@@ -60,13 +66,13 @@ namespace csLox.Interpreting
             }
         }
 
-        public Dummy VisitExpressionStmtStmt(Stmt.ExpressionStmt stmt)
+        public LoxVoid VisitExpressionStmtStmt(Stmt.ExpressionStmt stmt)
         {
             Evalutate(stmt.Expression);
             return null;
         }
 
-        public Dummy VisitIfStmt(Stmt.If stmt)
+        public LoxVoid VisitIfStmt(Stmt.If stmt)
         {
             if (IsTruthy(Evalutate(stmt.Condition)))
             {
@@ -81,7 +87,7 @@ namespace csLox.Interpreting
             return null;
         }
 
-        public Dummy VisitWhileStmt(Stmt.While stmt)
+        public LoxVoid VisitWhileStmt(Stmt.While stmt)
         {
             try
             {
@@ -90,23 +96,20 @@ namespace csLox.Interpreting
                     Execute(stmt.Body);
                 }
             }
-            catch (Break)
-            {
-
-            }
+            catch (Break) { }
 
 
             return null;
         }
 
-        public Dummy VisitPrintStmt(Stmt.Print stmt)
+        public LoxVoid VisitPrintStmt(Stmt.Print stmt)
         {
             object value = Evalutate(stmt.Expression);
             Console.WriteLine(Stringify(value));
             return null;
         }
 
-        public Dummy VisitVarStmt(Stmt.Var stmt)
+        public LoxVoid VisitVarStmt(Stmt.Var stmt)
         {
             stmt.Initializer.Match(
                 some: init => _environment.Define(stmt.Name.Lexeme, Evalutate(init)),
@@ -116,15 +119,31 @@ namespace csLox.Interpreting
             return null;
         }
 
-        public Dummy VisitBlockStmt(Stmt.Block stmt)
+        public LoxVoid VisitBlockStmt(Stmt.Block stmt)
         {
             ExecuteBlock(stmt.Statements, new Environment(_environment));
             return null;
         }
 
-        public Dummy VisitBreakStmt(Stmt.Break stmt)
+        public LoxVoid VisitBreakStmt(Stmt.Break stmt)
         {
             throw new Break();
+        }
+
+        public LoxVoid VisitFunctionStmt(Stmt.Function stmt)
+        {
+            LoxFunction function = new LoxFunction(stmt, _environment);
+            _environment.Define(stmt.Name.Lexeme, function);
+            return null;
+        }
+
+        public LoxVoid VisitReturnStmt(Stmt.Return stmt)
+        {
+            object value = stmt.Value.HasValue
+                ? Evalutate(stmt.Value.ValueOrFailure())
+                : null;
+
+            throw new Return(value);
         }
 
         private object Evalutate(Expr expr)
@@ -198,7 +217,7 @@ namespace csLox.Interpreting
                 .Select(e => Evalutate(e))
                 .ToList();
 
-            if (callee is LoxCallable function)
+            if (callee is ILoxCallable function)
             {
                 if (arguments.Count != function.Arity)
                 {
@@ -210,6 +229,11 @@ namespace csLox.Interpreting
             }
 
             throw new RuntimeError(expr.Paren, "Can only call functions and classes.");
+        }
+
+        public object VisitLambdaExpr(Expr.Lambda expr)
+        {
+            return new LoxLambda(expr, _environment);
         }
 
         public object VisitConditionalExpr(Expr.Conditional expr)
@@ -336,22 +360,6 @@ namespace csLox.Interpreting
         public object VisitVariableExpr(Expr.Variable expr)
         {
             return _environment.Get(expr.Name);
-        }
-
-        public Dummy VisitFunctionStmt(Stmt.Function stmt)
-        {
-            LoxFunction function = new LoxFunction(stmt, _environment);
-            _environment.Define(stmt.Name.Lexeme, function);
-            return null;
-        }
-
-        public Dummy VisitReturnStmt(Stmt.Return stmt)
-        {
-            object value = stmt.Value.HasValue
-                ? Evalutate(stmt.Value.ValueOrFailure())
-                : null;
-
-            throw new Return(value);
         }
     }
 }

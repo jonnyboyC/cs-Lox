@@ -21,6 +21,7 @@ namespace tools
                 {
                     "Assign     : Token name, Expr value",
                     "Grouping   : Expr expression",
+                    "Lambda     : List<Token> parameter, List<Stmt> body",
                     "Logical    : Expr left, Token opCode, Expr right",
                     "Literal    : Object value",
                     "Conditional: Expr condition, Expr trueExpr, Expr falseExpr",

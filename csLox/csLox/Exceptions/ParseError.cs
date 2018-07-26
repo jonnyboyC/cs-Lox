@@ -1,6 +1,6 @@
 using System;
 
-namespace csLox 
+namespace csLox.Exceptions
 {
     internal class ParseError : FormatException {}
 }

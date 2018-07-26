@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace csLox
+namespace csLox.Exceptions
 {
     internal class Return : Exception
     {
