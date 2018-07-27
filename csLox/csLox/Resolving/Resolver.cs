@@ -11,11 +11,26 @@ namespace csLox.Resolving
 {
     internal class Resolver : Expr.Visitor<LoxVoid>, Stmt.Visitor<LoxVoid>
     {
+        private class Scope : Dictionary<string, Variable> { }
+        private class Variable
+        {
+            internal VariableState State { get; set; }
+            internal Token Name { get; }
+
+            public Variable(Token name, VariableState state)
+            {
+                Name = name;
+                State = state;
+            }
+        }
+
+
         private readonly Interpreter _interpreter;
-        private readonly Stack<Dictionary<string, bool>> _scopes = new Stack<Dictionary<string, bool>>();
+        private readonly Stack<Scope> _scopes = new Stack<Scope>();
         private FunctionType _currentFunction = FunctionType.None;
 
         private enum FunctionType { None, Function }
+        private enum VariableState { Declared, Defined, Used }
 
         internal Resolver(Interpreter interpreter)
         {
@@ -40,19 +55,19 @@ namespace csLox.Resolving
             expr.Accept(this);
         }
 
-        private void ResolveFunction(Stmt.Function function, FunctionType type)
+        private void ResolveFunction(List<Token> parameters, List<Stmt> body, FunctionType type)
         {
             FunctionType enclosingFunction = _currentFunction;
             _currentFunction = type;
 
             BeginScope();
-            foreach (Token param in function.Parameter)
+            foreach (Token param in parameters)
             {
                 Declare(param);
                 Define(param);
             }
 
-            Resolve(function.Body);
+            Resolve(body);
             EndScope();
 
             _currentFunction = enclosingFunction;
@@ -66,6 +81,7 @@ namespace csLox.Resolving
                 {
                     // TODO double check this
                     _interpreter.Resolve(expr, i);
+                    scope[name.Lexeme] = new Variable(name, VariableState.Used);
                     return;
                 }
             }
@@ -73,11 +89,21 @@ namespace csLox.Resolving
 
         private void BeginScope()
         {
-            _scopes.Push(new Dictionary<string, bool>());
+            _scopes.Push(new Scope());
         }
 
         private void EndScope()
         {
+            var currentScope = _scopes.Peek();
+
+            foreach (Variable variable in currentScope.Values)
+            {
+                if (variable.State != VariableState.Used)
+                {
+                    Lox.Error(variable.Name, $"Local variable {variable.Name.Lexeme} was never used");
+                }
+            }
+
             _scopes.Pop();
         }
 
@@ -85,19 +111,19 @@ namespace csLox.Resolving
         {
             if (_scopes.None()) return;
 
-            Dictionary<string, bool> scope = _scopes.Peek();
+            Scope scope = _scopes.Peek();
             if (scope.ContainsKey(name.Lexeme))
             {
                 Lox.Error(name, "Variable with this name already declared in this scope.");
             }
 
-            scope[name.Lexeme] = false;
+            scope[name.Lexeme] = new Variable(name, VariableState.Declared);
         }
 
         private void Define(Token name)
         {
             if (_scopes.None()) return;
-            _scopes.Peek()[name.Lexeme] = true;
+            _scopes.Peek()[name.Lexeme] = new Variable(name, VariableState.Defined);
         }
 
         public LoxVoid VisitAssignExpr(Expr.Assign expr)
@@ -155,7 +181,7 @@ namespace csLox.Resolving
             Declare(stmt.Name);
             Define(stmt.Name);
 
-            ResolveFunction(stmt, FunctionType.Function);
+            ResolveFunction(stmt.Parameter, stmt.Body, FunctionType.Function);
 
             return null;
         }
@@ -175,18 +201,9 @@ namespace csLox.Resolving
             return null;
         }
 
-        // TODO maybe try to combine with function
         public LoxVoid VisitLambdaExpr(Expr.Lambda lambda)
         {
-            BeginScope();
-            foreach (Token param in lambda.Parameter)
-            {
-                Declare(param);
-                Define(param);
-            }
-
-            Resolve(lambda.Body);
-            EndScope();
+            ResolveFunction(lambda.Parameter, lambda.Body, FunctionType.Function);
 
             return null;
         }
@@ -228,7 +245,7 @@ namespace csLox.Resolving
 
         public LoxVoid VisitVariableExpr(Expr.Variable expr)
         {
-            if (_scopes.Any() && _scopes.Peek().TryGetValue(expr.Name.Lexeme, out bool set) && set == false)
+            if (_scopes.Any() && _scopes.Peek().TryGetValue(expr.Name.Lexeme, out Variable variable) && variable.State == VariableState.Declared)
             {
                Lox.Error(expr.Name, "Cannot read local variable in its own initializer.");
             }

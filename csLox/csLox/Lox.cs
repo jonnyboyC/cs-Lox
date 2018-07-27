@@ -97,13 +97,26 @@ namespace csLox
                 }
             }
 
-            if (HadError) return 65;
+            if (HadError)
+            {
+                Console.Read();
+                return 65;
+            }
 
             Resolver resolver = new Resolver(Interpreter);
             resolver.Resolve(statements);
+            if (HadError)
+            {
+                Console.Read();
+                return 65;
+            }
 
             Interpreter.Interpret(statements);
-            if (HadRuntimeError) return 70;
+            if (HadRuntimeError)
+            {
+                Console.Read();
+                return 70;
+            }
 
             Console.Read();
             return 0;
