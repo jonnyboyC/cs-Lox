@@ -36,6 +36,7 @@ namespace tools
             DefineAst(outputDir, "Stmt", "csLox.Parsing", new List<string>()
                 {
                     "Block          : List<Stmt> statements",
+                    "Class          : Token name, LIst<Stmt.Function> methods",
                     "ExpressionStmt : Expr expression",
                     "Function       : Token name, List<Token> parameter, List<Stmt> body",
                     "If             : Expr condition, Stmt thenBranch, Option<Stmt> elseBranch",
