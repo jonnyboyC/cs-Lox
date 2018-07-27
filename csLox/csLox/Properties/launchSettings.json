@@ -2,7 +2,7 @@
   "profiles": {
     "csLox": {
       "commandName": "Project",
-      "commandLineArgs": "../../../../test/localVariableUnused.lox"
+      "commandLineArgs": "../../../../test/testClass.lox"
     }
   }
 }

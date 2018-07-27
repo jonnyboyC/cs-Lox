@@ -185,5 +185,29 @@ namespace csLox.Utilities
 
             return $"fun ({parameters}) {{ {body} }}";
         }
+
+        public IEnumerable<string> VisitClassStmt(Stmt.Class stmt)
+        {
+            yield return $"class {stmt.Name} {{";
+
+            foreach (var method in stmt.Methods)
+            {
+                foreach (string line in PrintStmt(method))
+                {
+                    yield return $"  {line}";
+                }
+            }
+            yield return "}";
+        }
+
+        public string VisitGetExpr(Expr.Get expr)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitSetExpr(Expr.Set expr)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

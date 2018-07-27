@@ -36,7 +36,7 @@ namespace csLox.Parsing
             try 
             {
                 if (Match(TokenType.Class)) return ClassDeclaration().Some();
-                if (Match(TokenType.Fun)) return Function("function").Some();
+                if (Match(TokenType.Fun)) return (Function("function") as Stmt).Some();
                 if (Match(TokenType.Var)) return VarDeclaration().Some();
                 return Statement(insideLoop).Some();
             } catch (ParseError) {
@@ -57,7 +57,7 @@ namespace csLox.Parsing
             return new Stmt.Var(name, initializer);
         }
 
-        private Stmt Function(string kind)
+        private Stmt.Function Function(string kind)
         {
             Token name = Consume(TokenType.Identifier, $"Expect {kind} name.");
             Consume(TokenType.LeftParen, $"Expect '(' after {kind} name.");
@@ -264,13 +264,17 @@ namespace csLox.Parsing
                 Token equals = Previous();
                 Expr value = Assignment();
 
-                if (expr is Expr.Variable variable) 
+                switch (expr)
                 {
-                    Token name = variable.Name;
-                    return new Expr.Assign(name, value);
+                    case Expr.Variable variable:
+                        Token name = variable.Name;
+                        return new Expr.Assign(name, value);
+                    case Expr.Get get:
+                        return new Expr.Set(get.Instance, get.Name, value);
+                    default:
+                        Error(equals, "invalid assignment target.");
+                        break;
                 }
-
-                Error(equals, "invalid assignment target.");
             }
 
             return expr;
@@ -378,9 +382,16 @@ namespace csLox.Parsing
 
             while (true)
             {
-                if (!Match(TokenType.LeftParen)) break;
-
-                expr = FinishCall(expr);
+                if (Match(TokenType.LeftParen))
+                {
+                    expr = FinishCall(expr);
+                }
+                else if (Match(TokenType.Dot))
+                {
+                    Token name = Consume(TokenType.Identifier, "Expect property name after '.'.");
+                    expr = new Expr.Get(expr, name);
+                }
+                else break;
             }
 
             return expr;

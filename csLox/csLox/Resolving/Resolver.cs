@@ -148,6 +148,13 @@ namespace csLox.Resolving
             return null;
         }
 
+        public LoxVoid VisitClassStmt(Stmt.Class stmt)
+        {
+            Declare(stmt.Name);
+            Define(stmt.Name);
+            return null;
+        }
+
         public LoxVoid VisitBreakStmt(Stmt.Break stmt)
         {
             throw new NotImplementedException();
@@ -267,6 +274,17 @@ namespace csLox.Resolving
             Resolve(stmt.Condition);
             Resolve(stmt.Body);
             return null;
+        }
+
+        public LoxVoid VisitGetExpr(Expr.Get expr)
+        {
+            Resolve(expr.Instance);
+            return null;
+        }
+
+        public LoxVoid VisitSetExpr(Expr.Set expr)
+        {
+            throw new NotImplementedException();
         }
     }
 }

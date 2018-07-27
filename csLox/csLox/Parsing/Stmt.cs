@@ -40,8 +40,8 @@ namespace csLox.Parsing
         internal class Class : Stmt
         {
             internal Token Name { get; }
-            internal LIst<Stmt.Function> Methods { get; }
-            internal Class(Token name, LIst<Stmt.Function> methods)
+            internal List<Function> Methods { get; }
+            internal Class(Token name, List<Function> methods)
             {
                 Name = name;
                 Methods = methods;

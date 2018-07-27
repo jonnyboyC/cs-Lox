@@ -125,6 +125,14 @@ namespace csLox.Interpreting
             return null;
         }
 
+        public LoxVoid VisitClassStmt(Stmt.Class stmt)
+        {
+            _environment.Define(stmt.Name.Lexeme, null);
+            LoxClass @class = new LoxClass(stmt.Name.Lexeme);
+            _environment.Assign(stmt.Name, @class);
+            return null;
+        }
+
         public LoxVoid VisitBreakStmt(Stmt.Break stmt)
         {
             throw new Break();
@@ -381,6 +389,33 @@ namespace csLox.Interpreting
             {
                 return Globals.Get(name);
             }
+        }
+
+        public object VisitGetExpr(Expr.Get expr)
+        {
+            object instanceObj = Evalutate(expr.Instance);
+
+            if (instanceObj is LoxInstance instance)
+            {
+                return instance.Get(expr.Name);
+            }
+
+            throw new RuntimeError(expr.Name, "Only instances have properties.");
+        }
+
+        public object VisitSetExpr(Expr.Set expr)
+        {
+            object instanceObj = Evalutate(expr.Instance);
+
+            if (instanceObj is LoxInstance instance)
+            {
+                object value = Evalutate(expr.Value);
+                instance.Set(expr.Name, value);
+
+                return value;
+            }
+
+            throw new RuntimeError(expr.Name, "Only instnaces have fields.");
         }
     }
 }
