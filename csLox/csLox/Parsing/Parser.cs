@@ -35,6 +35,7 @@ namespace csLox.Parsing
         {
             try 
             {
+                if (Match(TokenType.Class)) return ClassDeclaration().Some();
                 if (Match(TokenType.Fun)) return Function("function").Some();
                 if (Match(TokenType.Var)) return VarDeclaration().Some();
                 return Statement(insideLoop).Some();
@@ -106,6 +107,21 @@ namespace csLox.Parsing
             }
 
             return ExpressionsStatement();
+        }
+
+        private Stmt ClassDeclaration()
+        {
+            Token name = Consume(TokenType.Identifier, "Expect class name.");
+            Consume(TokenType.LeftBrace, "Expect '{' before class body.");
+
+            var methods = new List<Stmt.Function>();
+            while(!Check(TokenType.RightBrace) && !IsAtEnd())
+            {
+                methods.Add(Function("method"));
+            }
+
+            Consume(TokenType.RightBrace, "Expect '}' after class body");
+            return new Stmt.Class(name, methods);
         }
 
         private Stmt ReturnStatement()
