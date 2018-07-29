@@ -1,4 +1,5 @@
-use scanning::tokentype::{TokenType, LiteralTokenType};
+use scanning::token_type::{TokenType, LiteralTokenType};
+use scanning::scanning_error::ScanningError;
 use std::fmt;
 
 #[derive(Debug)]
@@ -21,15 +22,23 @@ impl Token {
     token_type: TokenType, 
     lexeme: String, 
     literal: Option<Literal>,
-    line: u32) -> Token
+    line: u32) -> Result<Token, ScanningError>
   {
     // sanity check that we don't accidently pass a literal when we shouldn't
-    match TokenType.is_literal() {
-      LiteralTokenType::Literal => debug_assert!(literal.is_some()),
-      LiteralTokenType::Identifier => debug_assert!(literal.is_none()),
+    match token_type.is_literal() {
+      LiteralTokenType::Literal => {
+        match literal {
+          Some(_) => Ok(Token { token_type, lexeme, literal, line }),
+          None => Err(ScanningError::TokenLiteralFound(token_type))
+        } 
+      }
+      LiteralTokenType::Identifier => {
+        match literal {
+          Some(_) => Err(ScanningError::TokenLiteralFound(token_type)),
+          None => Ok(Token { token_type, lexeme, literal, line })
+        }
+      }
     }
-    debug_assert!();
-    Token { token_type, lexeme, literal, line }
   }
 }
 
@@ -50,35 +59,29 @@ impl fmt::Display for Token {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+  use super::*;
 
-    #[test]
-    fn vec2_constructor() {
-        let token_type = TokenType::SemiColon;
-        let lexeme = "test";
-        let literal = Some(Literal::String("test"));
-        let line = 10;
+  #[test]
+  fn vec2_constructor() {
+    let token_type = TokenType::SemiColon;
+    let lexeme = "test";
+    let literal = Some(Literal::String("test"));
+    let line = 10;
 
-        let token = Token::New(token_type, lexeme, literal, line)
-
-        let a: Vec2<f64> = Vec2::new(x, y);
-        assert_eq!(a.x, x);
-        assert_eq!(a.y, y);
+    match Token::New(token_type, lexeme, literal, line) {
+      Ok(token) => {
+        assert_eq!(line, token.line);
+        assert_eq!(lexeme, token.lexeme);
+        match token.literal {
+          Some(lit) => assert_eq!(literal, lit),
+          None => assert!(false) 
+        }
+        assert_eq!(token_type, token.token_type);
+      },
+      Err(err) => {
+        assert!(false)
+      }
     }
-
-    #[test]
-    fn vec2_add() {
-        let a = Vec2::new(0.0, 5.0);
-        let b = Vec2::new(10.0, 15.0);
-
-        assert_eq!(Vec2 {x: 10.0, y: 20.0}, a + b);
-    }
-
-    #[test]
-    fn vec2_display() {
-        let a = Vec2::new(0.0, 10.0);
-
-        assert_eq!(a.to_string(), "(0.00, 10.00)")
-    }
+  }
 }
 

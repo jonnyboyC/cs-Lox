@@ -3,5 +3,5 @@ bin/
 obj/
 .vs/
 .vscode/
-/target
+target/
 **/*.rs.bk

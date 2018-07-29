@@ -25,7 +25,7 @@ pub enum TokenType {
 }
 
 impl TokenType {
-  fn is_literal(&self) -> LiteralTokenType {
+  pub fn is_literal(&self) -> LiteralTokenType {
     match self {
       TokenType::Identifier => LiteralTokenType::Identifier,
       TokenType::String => LiteralTokenType::Identifier,
