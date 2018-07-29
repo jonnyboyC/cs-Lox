@@ -1,7 +1,7 @@
 extern crate rs_lox;
 
 use rs_lox::scanning::token::{Literal, Token};
-use rs_lox::scanning::tokentype::TokenType;
+use rs_lox::scanning::token_type::TokenType;
 
 fn main() {
     let a = Token::new(
@@ -11,7 +11,7 @@ fn main() {
         5
     );
 
-    println!("{}", a);
+    println!("{}", a.unwrap());
 
     println!("Hello, world!");
 }

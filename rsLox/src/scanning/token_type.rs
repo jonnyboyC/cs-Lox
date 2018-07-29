@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TokenType {
   // Single-character tokens
   LeftParen, RightParen, LeftBrace, RightBrace,
@@ -27,18 +27,18 @@ pub enum TokenType {
 impl TokenType {
   pub fn is_literal(&self) -> LiteralTokenType {
     match self {
-      TokenType::Identifier => LiteralTokenType::Identifier,
-      TokenType::String => LiteralTokenType::Identifier,
-      TokenType::Number => LiteralTokenType::Identifier,
-      _ => LiteralTokenType::Literal
+      TokenType::Identifier => LiteralTokenType::Literal,
+      TokenType::String => LiteralTokenType::Literal,
+      TokenType::Number => LiteralTokenType::Literal,
+      _ => LiteralTokenType::Keyword
     }
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum LiteralTokenType {
   Literal,
-  Identifier
+  Keyword
 }
 
 impl fmt::Display for TokenType {

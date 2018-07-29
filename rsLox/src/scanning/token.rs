@@ -2,7 +2,7 @@ use scanning::token_type::{TokenType, LiteralTokenType};
 use scanning::scanning_error::ScanningError;
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Literal {
     Number(f64),
     String(String)
@@ -32,7 +32,7 @@ impl Token {
           None => Err(ScanningError::TokenLiteralFound(token_type))
         } 
       }
-      LiteralTokenType::Identifier => {
+      LiteralTokenType::Keyword => {
         match literal {
           Some(_) => Err(ScanningError::TokenLiteralFound(token_type)),
           None => Ok(Token { token_type, lexeme, literal, line })
@@ -62,25 +62,65 @@ mod tests {
   use super::*;
 
   #[test]
-  fn vec2_constructor() {
-    let token_type = TokenType::SemiColon;
-    let lexeme = "test";
-    let literal = Some(Literal::String("test"));
+  fn token_constructor() {
+    let token_type = TokenType::String;
+    let lexeme = "test".to_string();
+    let literal = Some(Literal::String("test".to_string()));
     let line = 10;
 
-    match Token::New(token_type, lexeme, literal, line) {
-      Ok(token) => {
-        assert_eq!(line, token.line);
-        assert_eq!(lexeme, token.lexeme);
-        match token.literal {
-          Some(lit) => assert_eq!(literal, lit),
-          None => assert!(false) 
-        }
-        assert_eq!(token_type, token.token_type);
-      },
-      Err(err) => {
-        assert!(false)
-      }
+    let token = Token::new(token_type, lexeme, literal, line).unwrap();
+    assert_eq!(line, token.line);
+    assert_eq!("test".to_string(), token.lexeme);
+    assert_eq!(Literal::String("test".to_string()), token.literal.unwrap());
+    assert_eq!(TokenType::String, token.token_type);
+  }
+
+  #[test]
+  fn invalid_token_constructor1() {
+    let valid_enums: [TokenType; 3] = [
+      TokenType::String, 
+      TokenType::Number, 
+      TokenType::Identifier
+    ];
+
+    let invalid_enums: [TokenType; 40] = [
+      TokenType::LeftParen, TokenType::RightParen, 
+      TokenType::LeftBrace, TokenType::RightBrace,
+      TokenType::Comma, TokenType::Dot, TokenType::Minus, 
+      TokenType::Plus, TokenType::SemiColon, TokenType::Slash, 
+      TokenType::Star, TokenType::Question, TokenType::Colon,
+      TokenType::Bang, TokenType::BangEqual,
+      TokenType::Equal, TokenType::EqualEqual,
+      TokenType::Greater, TokenType::GreaterEqual,
+      TokenType::Less, TokenType::LessEqual,
+      TokenType::And, TokenType::Break, TokenType::Class, 
+      TokenType::Continue, TokenType::Else, TokenType::False, 
+      TokenType::Fun, TokenType::For, TokenType::If, 
+      TokenType::Nil, TokenType::Or, TokenType::Print, 
+      TokenType::Return, TokenType::Super, TokenType::This,
+      TokenType::True, TokenType::Var, TokenType::While,
+      TokenType::Eof
+    ];
+
+    let line = 10;
+    for valid_enum in valid_enums.clone().into_iter() {
+      let lexeme = "test".to_string();
+      let literal = Some(Literal::String("test".to_string()));
+
+      assert!(Token::new(valid_enum.clone(), lexeme, literal, line).is_ok());
+
+      let lexeme = "test".to_string();
+      assert!(Token::new(valid_enum.clone(), lexeme, None, line).is_err());
+    }
+
+    for invalid_enum in invalid_enums.clone().into_iter() {
+      let lexeme = "test".to_string();
+
+      assert!(Token::new(invalid_enum.clone(), lexeme, None, line).is_ok());
+
+      let lexeme = "test".to_string();
+      let literal = Some(Literal::String("test".to_string()));
+      assert!(Token::new(invalid_enum.clone(), lexeme, literal, line).is_err());
     }
   }
 }
