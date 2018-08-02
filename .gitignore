@@ -4,4 +4,5 @@ obj/
 .vs/
 .vscode/
 target/
+doc/
 **/*.rs.bk

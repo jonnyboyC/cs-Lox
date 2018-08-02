@@ -20,6 +20,7 @@ namespace csLox.Parsing
             T VisitCallExpr(Call expr);
             T VisitGetExpr(Get expr);
             T VisitSetExpr(Set expr);
+            T VisitThisExpr(This expr);
             T VisitUnaryExpr(Unary expr);
             T VisitVariableExpr(Variable expr);
         }
@@ -178,6 +179,19 @@ namespace csLox.Parsing
             internal override T Accept<T>(Visitor<T> visitor)
             {
                 return visitor.VisitSetExpr(this);
+            }
+        }
+
+        internal class This : Expr
+        {
+            internal Token Keyword { get; }
+            internal This(Token keyword)
+            {
+                Keyword = keyword;
+            }
+            internal override T Accept<T>(Visitor<T> visitor)
+            {
+                return visitor.VisitThisExpr(this);
             }
         }
 

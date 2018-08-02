@@ -2,7 +2,7 @@
   "profiles": {
     "csLox": {
       "commandName": "Project",
-      "commandLineArgs": "../../../../test/testClass.lox"
+      "commandLineArgs": "../../../../test/cake.lox"
     }
   }
 }

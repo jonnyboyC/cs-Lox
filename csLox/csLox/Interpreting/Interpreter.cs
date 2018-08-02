@@ -128,7 +128,18 @@ namespace csLox.Interpreting
         public LoxVoid VisitClassStmt(Stmt.Class stmt)
         {
             _environment.Define(stmt.Name.Lexeme, null);
-            LoxClass @class = new LoxClass(stmt.Name.Lexeme);
+
+            Dictionary<string, LoxFunction> methods = stmt.Methods
+                .Select(method => (
+                    name: method.Name.Lexeme,
+                    method: new LoxFunction(method, _environment, method.Name.Lexeme == "init")
+                ))
+                .ToDictionary(
+                    x => x.name,
+                    x => x.method
+                );
+
+            LoxClass @class = new LoxClass(stmt.Name.Lexeme, methods);
             _environment.Assign(stmt.Name, @class);
             return null;
         }
@@ -140,7 +151,7 @@ namespace csLox.Interpreting
 
         public LoxVoid VisitFunctionStmt(Stmt.Function stmt)
         {
-            LoxFunction function = new LoxFunction(stmt, _environment);
+            LoxFunction function = new LoxFunction(stmt, _environment, false);
             _environment.Define(stmt.Name.Lexeme, function);
             return null;
         }
@@ -416,6 +427,11 @@ namespace csLox.Interpreting
             }
 
             throw new RuntimeError(expr.Name, "Only instnaces have fields.");
+        }
+
+        public object VisitThisExpr(Expr.This expr)
+        {
+            return LookUpVariable(expr.Keyword, expr);
         }
     }
 }

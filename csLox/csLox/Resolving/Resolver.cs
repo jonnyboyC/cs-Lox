@@ -24,12 +24,15 @@ namespace csLox.Resolving
             }
         }
 
-
+        private readonly Token _thisPlaceHolder = new Token(TokenType.This, "this", "this", 0);
         private readonly Interpreter _interpreter;
         private readonly Stack<Scope> _scopes = new Stack<Scope>();
+
+        private ClassType _currentClass = ClassType.None;
         private FunctionType _currentFunction = FunctionType.None;
 
-        private enum FunctionType { None, Function }
+        private enum FunctionType { None, Function, Initializer, Method }
+        private enum ClassType { None, Class }
         private enum VariableState { Declared, Defined, Used }
 
         internal Resolver(Interpreter interpreter)
@@ -150,14 +153,32 @@ namespace csLox.Resolving
 
         public LoxVoid VisitClassStmt(Stmt.Class stmt)
         {
+            ClassType enclosingClass = _currentClass;
+            _currentClass = ClassType.Class;
+
+
             Declare(stmt.Name);
             Define(stmt.Name);
+
+            BeginScope();
+            _scopes.Peek().Add("this", new Variable(_thisPlaceHolder, VariableState.Defined));
+
+            foreach (Stmt.Function method in stmt.Methods)
+            {
+                var declaration = method.Name.Lexeme == "init"
+                    ? FunctionType.Initializer
+                    : FunctionType.Method;
+                ResolveFunction(method.Parameter, method.Body, declaration);
+            }
+
+            EndScope();
+            _currentClass = enclosingClass;
             return null;
         }
 
         public LoxVoid VisitBreakStmt(Stmt.Break stmt)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public LoxVoid VisitCallExpr(Expr.Call expr)
@@ -174,7 +195,11 @@ namespace csLox.Resolving
 
         public LoxVoid VisitConditionalExpr(Expr.Conditional expr)
         {
-            throw new NotImplementedException();
+            Resolve(expr.Condition);
+            Resolve(expr.TrueExpr);
+            Resolve(expr.FalseExpr);
+
+            return null;
         }
 
         public LoxVoid VisitExpressionStmtStmt(Stmt.ExpressionStmt stmt)
@@ -240,7 +265,15 @@ namespace csLox.Resolving
                 Lox.Error(stmt.Keyword, "Cannot return from top-level code.");
             }
 
-            stmt.Value.MatchSome(expr => Resolve(expr));
+            stmt.Value.MatchSome(expr => {
+                if (_currentFunction == FunctionType.Initializer)
+                {
+                    Lox.Error(stmt.Keyword, "Cannot return a value from an initializer");
+                }
+
+                Resolve(expr);
+
+            });
             return null;
         }
 
@@ -284,7 +317,21 @@ namespace csLox.Resolving
 
         public LoxVoid VisitSetExpr(Expr.Set expr)
         {
-            throw new NotImplementedException();
+            Resolve(expr.Value);
+            Resolve(expr.Instance);
+
+            return null;
+        }
+
+        public LoxVoid VisitThisExpr(Expr.This expr)
+        {
+            if (_currentClass == ClassType.None)
+            {
+                Lox.Error(expr.Keyword, "Cannot use 'this' outside of class");
+            }
+
+            ResolveLocal(expr, expr.Keyword);
+            return null;
         }
     }
 }

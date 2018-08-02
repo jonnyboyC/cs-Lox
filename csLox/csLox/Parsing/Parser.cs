@@ -137,8 +137,10 @@ namespace csLox.Parsing
 
         private Stmt BreakStatement()
         {
+            Token keyword = Previous();
             Consume(TokenType.SemiColon, "Expected ';' after break.");
-            return new Stmt.Break();
+
+            return new Stmt.Break(keyword);
         }
 
         private Stmt ForStatement()
@@ -341,7 +343,7 @@ namespace csLox.Parsing
         {
             Expr expr = resurse();
 
-            if (Match(types)) {
+            while (Match(types)) {
                 Token opCode = Previous();
                 Expr right = resurse();
                 expr = new Expr.Binary(expr, opCode, right);
@@ -426,6 +428,11 @@ namespace csLox.Parsing
             if (Match(TokenType.Number, TokenType.String))
             {
                 return new Expr.Literal(Previous().Literal);
+            }
+
+            if (Match(TokenType.This))
+            {
+                return new Expr.This(Previous());
             }
 
             if (Match(TokenType.Identifier)) 

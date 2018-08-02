@@ -202,12 +202,17 @@ namespace csLox.Utilities
 
         public string VisitGetExpr(Expr.Get expr)
         {
-            throw new NotImplementedException();
+            return $"{PrintExpr(expr.Instance)}.{expr.Name.Lexeme}";
         }
 
         public string VisitSetExpr(Expr.Set expr)
         {
-            throw new NotImplementedException();
+            return $"{PrintExpr(expr.Instance)}.{expr.Name.Lexeme}";
+        }
+
+        public string VisitThisExpr(Expr.This expr)
+        {
+            return expr.Keyword.Lexeme;
         }
     }
 }

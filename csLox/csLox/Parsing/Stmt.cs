@@ -159,8 +159,10 @@ namespace csLox.Parsing
 
         internal class Break : Stmt
         {
-            internal Break()
+            internal Token Keyword { get; }
+            internal Break(Token keyword)
             {
+                Keyword = keyword;
             }
             internal override T Accept<T>(Visitor<T> visitor)
             {

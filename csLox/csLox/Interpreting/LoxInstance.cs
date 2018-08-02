@@ -1,5 +1,6 @@
 ﻿using csLox.Exceptions;
 using csLox.Scanning;
+using Optional;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -28,7 +29,11 @@ namespace csLox.Interpreting
                 return value;
             }
 
-            throw new RuntimeError(name, $"Undefined property '{name.Lexeme}'.");
+            Option<LoxFunction> methodOption = _class.FindMethod(this, name.Lexeme);
+            return methodOption.Match(
+                some: method => method,
+                none: () => throw new RuntimeError(name, $"Undefined property '{name.Lexeme}'.")
+            );
         }
 
         public override string ToString()

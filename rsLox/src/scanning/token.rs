@@ -77,12 +77,14 @@ mod tests {
 
   #[test]
   fn invalid_token_constructor1() {
+    // all valid literal enums
     let valid_enums: [TokenType; 3] = [
       TokenType::String, 
       TokenType::Number, 
       TokenType::Identifier
     ];
 
+    // all invalid liteeral enums
     let invalid_enums: [TokenType; 40] = [
       TokenType::LeftParen, TokenType::RightParen, 
       TokenType::LeftBrace, TokenType::RightBrace,
@@ -103,6 +105,8 @@ mod tests {
     ];
 
     let line = 10;
+
+    // test correct response is created for all variants
     for valid_enum in valid_enums.clone().into_iter() {
       let lexeme = "test".to_string();
       let literal = Some(Literal::String("test".to_string()));

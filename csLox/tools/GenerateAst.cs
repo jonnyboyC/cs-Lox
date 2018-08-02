@@ -29,6 +29,7 @@ namespace tools
                     "Call       : Expr callee, Token paren, List<Expr> arguments",
                     "Get        : Expr instance, Token name",
                     "Set        : Expr instance, Token name, Expr value",
+                    "This       : Token keyword",
                     "Unary      : Token opCode, Expr right",
                     "Variable   : Token name"
                 },
@@ -46,7 +47,7 @@ namespace tools
                     "Return         : Token keyword, Option<Expr> value",
                     "Var            : Token name, Option<Expr> initializer",
                     "While          : Expr condition, Stmt body",
-                    "Break          : ",
+                    "Break          : Token keyword",
                 },
                 "csLox.Scanning",
                 "Optional"
