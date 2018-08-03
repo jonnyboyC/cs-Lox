@@ -9,11 +9,13 @@ namespace csLox.Interpreting
     {
         public string Name { get; }
         private readonly Dictionary<string, LoxFunction> _methods;
+        private readonly Option<LoxClass> _superclass;
 
-        public LoxClass(string name, Dictionary<string, LoxFunction> methods)
+        public LoxClass(string name, Option<LoxClass> superclass, Dictionary<string, LoxFunction> methods)
         {
             Name = name;
             _methods = methods;
+            _superclass = superclass;
         }
 
         public Option<LoxFunction> FindMethod(LoxInstance instance, string name)
@@ -23,7 +25,10 @@ namespace csLox.Interpreting
                 return method.Bind(instance).Some();
             }
 
-            return Option.None<LoxFunction>();
+            return _superclass.Match(
+                some: superclass => superclass.FindMethod(instance, name),
+                none: Option.None<LoxFunction>
+            );
         }
 
         public int Arity

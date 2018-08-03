@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Optional;
 using Optional.Unsafe;
+using Optional.Linq;
 using csLox.Scanning;
 using csLox.Exceptions;
 
@@ -112,6 +113,14 @@ namespace csLox.Parsing
         private Stmt ClassDeclaration()
         {
             Token name = Consume(TokenType.Identifier, "Expect class name.");
+
+            var superclass = Option.None<Expr.Variable>();
+            if (Match(TokenType.Less))
+            {
+                Consume(TokenType.Identifier, "Expect superclass name.");
+                superclass = new Expr.Variable(Previous()).Some();
+            }
+
             Consume(TokenType.LeftBrace, "Expect '{' before class body.");
 
             var methods = new List<Stmt.Function>();
@@ -121,7 +130,7 @@ namespace csLox.Parsing
             }
 
             Consume(TokenType.RightBrace, "Expect '}' after class body");
-            return new Stmt.Class(name, methods);
+            return new Stmt.Class(name, superclass, methods);
         }
 
         private Stmt ReturnStatement()
@@ -428,6 +437,14 @@ namespace csLox.Parsing
             if (Match(TokenType.Number, TokenType.String))
             {
                 return new Expr.Literal(Previous().Literal);
+            }
+
+            if (Match(TokenType.Super))
+            {
+                Token keyword = Previous();
+                Consume(TokenType.Dot, "Expect '.' after 'super'.");
+                Token method = Consume(TokenType.Identifier, "Expect super class method name.");
+                return new Expr.Super(keyword, method);
             }
 
             if (Match(TokenType.This))

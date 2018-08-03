@@ -40,10 +40,12 @@ namespace csLox.Parsing
         internal class Class : Stmt
         {
             internal Token Name { get; }
+            internal Option<Expr.Variable> Superclass { get; }
             internal List<Function> Methods { get; }
-            internal Class(Token name, List<Function> methods)
+            internal Class(Token name, Option<Expr.Variable> superclass, List<Function> methods)
             {
                 Name = name;
+                Superclass = superclass;
                 Methods = methods;
             }
             internal override T Accept<T>(Visitor<T> visitor)

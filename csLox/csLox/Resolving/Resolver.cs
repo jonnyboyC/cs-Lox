@@ -32,7 +32,7 @@ namespace csLox.Resolving
         private FunctionType _currentFunction = FunctionType.None;
 
         private enum FunctionType { None, Function, Initializer, Method }
-        private enum ClassType { None, Class }
+        private enum ClassType { None, Class, SubClass }
         private enum VariableState { Declared, Defined, Used }
 
         internal Resolver(Interpreter interpreter)
@@ -156,12 +156,20 @@ namespace csLox.Resolving
             ClassType enclosingClass = _currentClass;
             _currentClass = ClassType.Class;
 
-
             Declare(stmt.Name);
+            stmt.Superclass.MatchSome(superclass => Resolve(superclass));
+
             Define(stmt.Name);
 
+            stmt.Superclass.MatchSome(super =>
+            {
+                _currentClass = ClassType.SubClass;
+                BeginScope();
+                _scopes.Peek()["Super"] = new Variable(super.Name, VariableState.Defined);
+            });
+
             BeginScope();
-            _scopes.Peek().Add("this", new Variable(_thisPlaceHolder, VariableState.Defined));
+            _scopes.Peek()["this"] = new Variable(_thisPlaceHolder, VariableState.Defined);
 
             foreach (Stmt.Function method in stmt.Methods)
             {
@@ -170,6 +178,8 @@ namespace csLox.Resolving
                     : FunctionType.Method;
                 ResolveFunction(method.Parameter, method.Body, declaration);
             }
+
+            stmt.Superclass.MatchSome(super => EndScope());
 
             EndScope();
             _currentClass = enclosingClass;
@@ -331,6 +341,24 @@ namespace csLox.Resolving
             }
 
             ResolveLocal(expr, expr.Keyword);
+            return null;
+        }
+
+        public LoxVoid VisitSuperExpr(Expr.Super expr)
+        {
+            ResolveLocal(expr, expr.Keyword);
+
+            switch(_currentClass)
+            {
+                case ClassType.None:
+                    Lox.Error(expr.Keyword, "Cannot use 'super' outside of class.");
+                    break;
+                case ClassType.SubClass:
+                    break;
+                default:
+                    Lox.Error(expr.Keyword, "Cannot use 'super' in a class with not superclass.");
+                    break;
+            }
             return null;
         }
     }

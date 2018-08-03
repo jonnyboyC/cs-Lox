@@ -11,16 +11,16 @@ namespace csLox.Scoping
         private IDictionary<string, object> values 
             = new Dictionary<string, object>();
 
-        private Option<Environment> _enclosing = Option.None<Environment>();
+        public Option<Environment> Enclosing { get; }
 
         internal Environment()
         {
-            _enclosing = Option.None<Environment>();
+            Enclosing = Option.None<Environment>();
         }
 
         internal Environment (Environment enclosing)
         {
-            _enclosing = enclosing.Some();
+            Enclosing = enclosing.Some();
         }
 
         internal void Declare(string name)
@@ -41,7 +41,7 @@ namespace csLox.Scoping
                 return;
             }
 
-            _enclosing.Match(
+            Enclosing.Match(
                 some: (parentScope) => parentScope.Assign(name, value),
                 none: () => throw new RuntimeError(name, $"Undefined variable '{name.Lexeme}'.")
             );
@@ -71,7 +71,7 @@ namespace csLox.Scoping
             for (int i = 0; i < distance; i++)
             {
                 environment = environment.Match(
-                    some: env => env._enclosing,
+                    some: env => env.Enclosing,
                     none: Option.None<Environment>
                 );
             }
@@ -87,7 +87,7 @@ namespace csLox.Scoping
                 return value;
             }
 
-            return _enclosing.Match(
+            return Enclosing.Match(
                 some: (parentScope) => parentScope.Get(name),
                 none: () => throw new RuntimeError(name, $"Undefined variable '{name.Lexeme}.'")
             );

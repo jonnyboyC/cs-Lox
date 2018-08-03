@@ -29,6 +29,7 @@ namespace tools
                     "Call       : Expr callee, Token paren, List<Expr> arguments",
                     "Get        : Expr instance, Token name",
                     "Set        : Expr instance, Token name, Expr value",
+                    "Super      : Token keyword, Token method",
                     "This       : Token keyword",
                     "Unary      : Token opCode, Expr right",
                     "Variable   : Token name"
@@ -39,7 +40,7 @@ namespace tools
             DefineAst(outputDir, "Stmt", "csLox.Parsing", new List<string>()
                 {
                     "Block          : List<Stmt> statements",
-                    "Class          : Token name, List<Function> methods",
+                    "Class          : Token name, Option<Expr.Variable> superclass, List<Function> methods",
                     "ExpressionStmt : Expr expression",
                     "Function       : Token name, List<Token> parameter, List<Stmt> body",
                     "If             : Expr condition, Stmt thenBranch, Option<Stmt> elseBranch",

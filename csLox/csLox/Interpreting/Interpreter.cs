@@ -5,6 +5,7 @@ using Optional.Unsafe;
 using csLox.Exceptions;
 using csLox.Parsing;
 using csLox.Scanning;
+using Optional;
 using Environment = csLox.Scoping.Environment;
 
 namespace csLox.Interpreting
@@ -127,7 +128,23 @@ namespace csLox.Interpreting
 
         public LoxVoid VisitClassStmt(Stmt.Class stmt)
         {
+            Option<LoxClass> superclassOption = stmt.Superclass.Match(
+                some: variableStmt =>
+                {
+                    object superclassObj = Evalutate(variableStmt);
+                    if (superclassObj is LoxClass superclass) return superclass.Some();
+                    throw new RuntimeError(variableStmt.Name, "Superclass must be a class");
+                },
+                none: Option.None<LoxClass>
+            );
+
             _environment.Define(stmt.Name.Lexeme, null);
+
+            superclassOption.MatchSome(super =>
+            {
+                _environment = new Environment(_environment);
+                _environment.Define("super", super);
+            });
 
             Dictionary<string, LoxFunction> methods = stmt.Methods
                 .Select(method => (
@@ -139,7 +156,15 @@ namespace csLox.Interpreting
                     x => x.method
                 );
 
-            LoxClass @class = new LoxClass(stmt.Name.Lexeme, methods);
+            LoxClass @class = new LoxClass(stmt.Name.Lexeme, superclassOption, methods);
+            superclassOption.MatchSome(super =>
+            {
+                _environment = _environment.Enclosing.Match(
+                    some: env => env,
+                    none: () => throw new Exception("Expected enclosing scope none found")
+                );
+            });
+
             _environment.Assign(stmt.Name, @class);
             return null;
         }
@@ -432,6 +457,24 @@ namespace csLox.Interpreting
         public object VisitThisExpr(Expr.This expr)
         {
             return LookUpVariable(expr.Keyword, expr);
+        }
+
+        public object VisitSuperExpr(Expr.Super expr)
+        {
+            int distance = _locals[expr];
+            if (_environment.GetAt(distance, "super") is LoxClass superClass)
+            {
+                if (_environment.GetAt(distance - 1, "this") is LoxInstance instance)
+                {
+                    Option<LoxFunction> methodOption = superClass.FindMethod(instance, expr.Method.Lexeme);
+                    return methodOption.Match(
+                        some: method => method,
+                        none: () => throw new RuntimeError(expr.Method, $"Super method {expr.Method} not found")
+                    );
+                }
+            }
+
+            throw new RuntimeError(expr.Method, $"Super method {expr.Method} not found");
         }
     }
 }
